@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # MLFlow Tracking Server
+  mlflow:
+    image: python:3.10-slim
+    container_name: olist-mlflow
+    ports:
+      - "${MLFLOW_PORT:-5000}:5000"
+    volumes:
+      - ./mlruns:/app/mlruns
+      - ./models:/app/models
+    environment:
+      - BACKEND_STORE_URI=file:///app/mlruns
+      - ARTIFACT_ROOT=/app/mlruns/artifacts
+    working_dir: /app
+    command: >
+      bash -c "pip install mlflow -q && 
+               mlflow server --host 0.0.0.0 --port 5000 
+               --backend-store-uri file:///app/mlruns 
+               --default-artifact-root /app/mlruns/artifacts"
+    networks:
+      - olist-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Pipeline Runner
+  pipeline:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: olist-pipeline
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+      - ./mlruns:/app/mlruns
+      - ./reports:/app/reports
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    networks:
+      - olist-network
+    command: ["python", "scripts/run_pipeline.py"]
+
+  # Streamlit Dashboard (optional)
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: olist-dashboard
+    ports:
+      - "${STREAMLIT_PORT:-8501}:8501"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./notebooks:/app/notebooks
+    depends_on:
+      - mlflow
+      - pipeline
+    networks:
+      - olist-network
+    command: >
+      bash -c "pip install streamlit -q && 
+               streamlit run notebooks/dashboard.py 
+               --server.port 8501 
+               --server.address 0.0.0.0"
+
+  # Jupyter Notebook Server (optional)
+  jupyter:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: olist-jupyter
+    ports:
+      - "${JUPYTER_PORT:-8888}:8888"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./notebooks:/app/notebooks
+      - ./data:/app/data
+      - ./models:/app/models
+    networks:
+      - olist-network
+    command: >
+      bash -c "pip install jupyter notebook -q && 
+               jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser 
+               --allow-root --NotebookApp.token='' 
+               --NotebookApp.password=''"
+
+networks:
+  olist-network:
+    driver: bridge
+
+volumes:
+  mlruns:
+  models:
+  data:
+  logs:

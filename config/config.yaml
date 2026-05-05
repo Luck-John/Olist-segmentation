@@ -1,0 +1,119 @@
+# Configuration centrale du projet de segmentation Olist
+
+# Paths
+paths:
+  data_dir: "data"
+  output_dir: "data"
+  models_dir: "models"
+  reports_dir: "reports"
+
+# Random state pour reproducibilité
+random_state: 42
+
+# Données
+data:
+  base_final: "base_final.csv"
+  snapshot_lag_days: 7  # N_LATENCY_DAYS for reviews
+  date_columns:
+    - "order_purchase_timestamp"
+    - "order_approved_at"
+    - "order_delivered_carrier_date"
+    - "order_delivered_customer_date"
+    - "order_estimated_delivery_date"
+    - "shipping_limit_date"
+    - "review_creation_date"
+    - "review_answer_timestamp"
+
+# Preprocessing
+preprocessing:
+  # Winsorization limits (0.005 = 0.5%)
+  winsorize_limits:
+    lower: 0.000
+    upper: 0.005
+  # Columns to winsorize
+  cols_to_winsorize:
+    - "Monetary"
+    - "avg_order_value"
+    - "avg_freight_value"
+    - "first_purchase_value"
+
+# Feature Engineering
+feature_engineering:
+  # Haversine distance reference
+  sao_paulo_coords: [-23.55, -46.63]  # [lat, lng]
+  # Geographic categories (Top 5 + Other)
+  top_categories_count: 5
+
+# Scaling
+scaling:
+  method: "StandardScaler"  # StandardScaler, MinMaxScaler, RobustScaler
+
+# Clustering Models
+clustering:
+  # KMeans parameters
+  kmeans:
+    k_min: 2
+    k_max: 10
+    init: "k-means++"
+    n_init: 10
+    max_iter: 300
+  
+  # DBSCAN parameters
+  dbscan:
+    eps_min: 0.3
+    eps_max: 2.0
+    eps_step: 0.1
+    min_samples: 5
+  
+  # Hierarchical Clustering parameters
+  hierarchical:
+    linkage_methods: ["ward", "complete", "average"]
+    distance_metric: "euclidean"
+  
+  # KPrototypes parameters (mixed numerical + categorical)
+  kprototypes:
+    k_min: 2
+    k_max: 10
+    init: "Huang"
+    n_init: 10
+    max_iter: 100
+    categorical_gamma: 0.1  # Weight for categorical features
+
+# PCA
+pca:
+  n_components: 2  # For visualization
+  explained_variance_threshold: 0.85
+
+# Evaluation Metrics
+evaluation:
+  silhouette_min: -1.0
+  silhouette_max: 1.0
+  davies_bouldin_min: 0.0  # Lower is better
+  calinski_harabasz_min: 0.0  # Higher is better
+
+# MLFlow
+mlflow:
+  experiment_name: "Olist_Segmentation"
+  tracking_uri: "file:./mlruns"
+  registry_uri: null  # Use local MLFlow registry
+  model_name: "olist_clustering_model"
+  model_stage: "Production"
+
+# Model Registry
+model_registry:
+  enabled: true
+  stage: "Production"
+  archive_existing: true
+
+# Docker
+docker:
+  image_name: "olist-segmentation"
+  image_tag: "latest"
+  streamlit_port: 8501
+  mlflow_port: 5000
+
+# Logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  log_file: "logs/segmentation.log"
