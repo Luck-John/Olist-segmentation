@@ -1,8 +1,9 @@
 # 🎯 Olist Customer Segmentation
 
-[![CI/CD Pipeline](https://github.com/your-repo/actions/workflows/ci.yml/badge.svg)](https://github.com/your-repo/actions)
-[![codecov](https://codecov.io/gh/your-repo/branch/main/graph/badge.svg)](https://codecov.io/gh/your-repo)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
+[![Lint: flake8](https://img.shields.io/badge/lint-flake8-blue)](https://github.com/PyCQA/flake8)
 [![MLFlow](https://img.shields.io/badge/MLflow-tracking-blue)](https://mlflow.org/)
 [![Docker](https://img.shields.io/badge/Docker-containerized-blue)](https://www.docker.com/)
 
@@ -98,21 +99,19 @@ docker-compose up -d
 docker-compose logs -f pipeline
 ```
 
-## 🧪 Testing
+## 📚 Complete Documentation
 
-```bash
-# Run all tests
-pytest tests/ -v
+Start here to find the guide you need:
 
-# Run with coverage
-pytest tests/ --cov=src --cov-report=html
+| **Quick Lookup** | **Development** | **Deployment** | **Academic** |
+|---|---|---|---|
+| ⚡ [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | 👨‍💻 [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) | ✅ [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) | 🎓 [ACADEMIC_PRESENTATION.md](ACADEMIC_PRESENTATION.md) |
+| 📚 [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) | 🧪 [TESTING.md](TESTING.md) | 🚀 [DEPLOYMENT.md](DEPLOYMENT.md) | ⚡ [DEMO_SCRIPT.md](DEMO_SCRIPT.md) |
+| 🆘 [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | ✔️ [PRE_PUSH_VALIDATION.md](PRE_PUSH_VALIDATION.md) | 📋 [LOGGING.md](LOGGING.md) | 📊 [PROJECT_STATUS.md](PROJECT_STATUS.md) |
 
-# Run specific test file
-pytest tests/test_features.py -v
+**Start Here:** [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) - Find the right guide for your needs
 
-# Run with markers
-pytest tests/ -m "not slow" -v
-```
+---
 
 ## 📈 MLFlow Tracking
 

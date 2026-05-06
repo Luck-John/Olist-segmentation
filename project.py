@@ -95,9 +95,9 @@ def format_code():
 def start_mlflow():
     """Start MLFlow UI"""
     print(f"\n{'='*60}")
-    print("📋 Starting MLFlow UI")
+    print("� Starting MLFlow UI")
     print(f"{'='*60}")
-    print("MLFlow UI: http://localhost:5000\n")
+    print("✅ MLFlow UI: http://localhost:5000\n")
     
     subprocess.run([
         sys.executable, "-m", "mlflow", "server",
@@ -105,6 +105,61 @@ def start_mlflow():
         "--host", "0.0.0.0",
         "--port", "5000"
     ])
+
+
+def start_dashboard():
+    """Start Streamlit dashboard"""
+    print(f"\n{'='*60}")
+    print("📈 Starting Streamlit Dashboard")
+    print(f"{'='*60}")
+    print("✅ Dashboard: http://localhost:8501\n")
+    
+    subprocess.run([
+        sys.executable, "-m", "streamlit", "run",
+        "notebooks/dashboard.py",
+        "--server.port", "8501",
+        "--server.address", "0.0.0.0"
+    ])
+
+
+def test_local():
+    """Run all tests locally like GitHub Actions"""
+    return run_command(
+        [sys.executable, "scripts/test_local.py"],
+        "Running all tests locally"
+    )
+
+
+def setup_dev():
+    """Setup development environment"""
+    return run_command(
+        [sys.executable, "scripts/setup_dev.py"],
+        "Setting up development environment"
+    )
+
+
+def install_dev():
+    """Install development dependencies"""
+    dev_deps = [
+        "black",
+        "isort",
+        "flake8",
+        "flake8-docstrings",
+        "flake8-bugbear",
+        "mypy",
+        "bandit",
+        "pytest",
+        "pytest-cov",
+        "pytest-xdist",
+        "pytest-mock",
+        "pre-commit",
+        "streamlit",
+    ]
+    
+    return run_command(
+        [sys.executable, "-m", "pip", "install"] + dev_deps,
+        "Installing development dependencies"
+    )
 
 
 def docker_build():
@@ -144,22 +199,27 @@ Usage: python project.py [command]
 
 Commands:
   install       Install project dependencies
+  install-dev   Install dev dependencies (testing, linting)
+  setup         Setup development environment with pre-commit
   test          Run tests with coverage report
+  test-local    Run all tests locally (like GitHub Actions)
   lint          Check code quality (flake8, black, isort)
   format        Format code (black, isort)
   pipeline      Run the main clustering pipeline
   mlflow        Start MLFlow UI server
+  dashboard     Start Streamlit dashboard
   docker-build  Build Docker image
   docker-up     Start Docker services (docker-compose up)
   docker-down   Stop Docker services (docker-compose down)
-  logs          Show Docker service logs
   help          Show this help message
 
 Examples:
-  python project.py install        # Install dependencies
+  python project.py setup          # First time setup
   python project.py test           # Run all tests
+  python project.py test-local     # Run like GitHub Actions
   python project.py pipeline       # Execute pipeline
   python project.py mlflow         # Start MLFlow UI
+  python project.py dashboard      # Start Streamlit dashboard
   python project.py docker-up      # Start all services
 
 For more information, see README.md
@@ -177,11 +237,15 @@ def main():
     
     commands = {
         'install': install_dependencies,
+        'install-dev': install_dev,
+        'setup': setup_dev,
         'test': run_tests,
+        'test-local': test_local,
         'lint': lint_code,
         'format': format_code,
         'pipeline': run_pipeline,
         'mlflow': start_mlflow,
+        'dashboard': start_dashboard,
         'docker-build': docker_build,
         'docker-up': docker_up,
         'docker-down': docker_down,
