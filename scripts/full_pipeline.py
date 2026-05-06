@@ -26,10 +26,6 @@ from src.features.engineering import FeatureEngineer
 
 logger = get_logger(__name__)
 
-# Configuration constants
-K_MIN, K_MAX = 4, 8
-N_COMP = 2  # PCA components
-
 # Segment naming and actions
 SEGMENT_NAMES = {}  # Will be populated based on cluster analysis
 SEGMENT_ACTIONS = {}
@@ -53,13 +49,22 @@ def analyze_and_name_clusters(df_clean, model_labels, feature_cols):
     df_analysis = df_clean.copy()
     df_analysis["cluster"] = model_labels
 
-    # Use available columns for profiling
-    available_profile_cols = []
-    for col in ["Recency", "Monetary", "Frequency", "avg_review_score", "avg_delivery_days",
-                "avg_installments", "avg_item_price", "CLV_estimate",
-                "late_delivery_rate", "customer_tenure"]:
-        if col in df_analysis.columns:
-            available_profile_cols.append(col)
+    # Profile columns aligned with engineered features (see FeatureEngineer + pipeline feature_cols)
+    preferred_profile_cols = [
+        "Recency",
+        "Monetary",
+        "Frequency",
+        "avg_delivery_days",
+        "late_delivery_rate",
+        "avg_delivery_delta",
+        "avg_review_score_full",
+        "avg_review_score_available",
+        "has_full_review",
+        "has_available_review",
+        "CLV",
+        "dist_sao_paulo",
+    ]
+    available_profile_cols = [c for c in preferred_profile_cols if c in df_analysis.columns]
     
     logger.info(f"Profile columns available: {available_profile_cols}")
 
@@ -78,8 +83,14 @@ def analyze_and_name_clusters(df_clean, model_labels, feature_cols):
     else:
         mon_q = [0, 5000, 10000]
     
-    if "avg_review_score" in df_analysis.columns:
-        rev_med = df_analysis["avg_review_score"].median()
+    rev_col = None
+    if "avg_review_score_available" in df_analysis.columns:
+        rev_col = "avg_review_score_available"
+    elif "avg_review_score_full" in df_analysis.columns:
+        rev_col = "avg_review_score_full"
+    if rev_col:
+        _m = df_analysis[rev_col].median()
+        rev_med = float(_m) if pd.notna(_m) else 4.0
     else:
         rev_med = 4.0
 
@@ -91,7 +102,11 @@ def analyze_and_name_clusters(df_clean, model_labels, feature_cols):
         # Get values safely
         rec_val = profile_median.loc[cluster_id, "Recency"] if "Recency" in available_profile_cols else 0
         mon_val = profile_median.loc[cluster_id, "Monetary"] if "Monetary" in available_profile_cols else 0
-        rev_val = profile_median.loc[cluster_id, "avg_review_score"] if "avg_review_score" in available_profile_cols else 4.0
+        rev_val = (
+            profile_median.loc[cluster_id, rev_col]
+            if rev_col and rev_col in available_profile_cols
+            else rev_med
+        )
 
         # Naming logic
         if mon_val > mon_q[2] and rec_val < rec_q[1]:
@@ -124,20 +139,32 @@ def run_full_pipeline(output_dir="reports", models_dir="notebooks/models"):
     1. Load and preprocess data
     2. Engineer features
     3. Scale features
-    4. Fit KMeans models for k in [K_MIN, K_MAX]
+    4. Fit KMeans models for k in [k_min, k_max] (config notebook_reproduction)
     5. Select best model based on silhouette score
     6. Apply PCA for visualization
     7. Analyze and name clusters
     8. Save all outputs (CSV, pickle, JSON)
     """
     config = Config()
+    cfg = config.get()
+
+    nr = cfg.get("notebook_reproduction") or {}
+    k_min = int(nr.get("k_min", 4))
+    k_max = int(nr.get("k_max", 8))
+    n_comp = int(nr.get("pca_n_components", cfg.get("pca", {}).get("n_components", 2)))
+    kmeans_cfg = cfg["clustering"]["kmeans"]
+    random_state = int(cfg.get("random_state", 42))
 
     # Create output directories
     Path(output_dir).mkdir(exist_ok=True)
     Path(models_dir).mkdir(parents=True, exist_ok=True)
 
     logger.info("=" * 80)
-    logger.info("STARTING FULL PIPELINE")
+    logger.info("STARTING FULL PIPELINE (reproduction notebook Modélisons)")
+    logger.info(
+        f"KMeans: k in [{k_min}, {k_max}], random_state={random_state}, "
+        f"init={kmeans_cfg['init']}, n_init={kmeans_cfg['n_init']}"
+    )
     logger.info("=" * 80)
 
     # ========== STEP 1: DATA LOADING & PREPROCESSING ==========
@@ -173,14 +200,20 @@ def run_full_pipeline(output_dir="reports", models_dir="notebooks/models"):
     logger.info(f"Scaled features shape: {X_scaled.shape}")
 
     # ========== STEP 5: KMEANS CLUSTERING (RANGE) ==========
-    logger.info(f"\n[STEP 4] Fitting KMeans for k in [{K_MIN}, {K_MAX}]...")
+    logger.info(f"\n[STEP 4] Fitting KMeans for k in [{k_min}, {k_max}]...")
     
     results = []
     models = {}
     
-    for k in range(K_MIN, K_MAX + 1):
+    for k in range(k_min, k_max + 1):
         logger.info(f"  Fitting KMeans with k={k}...")
-        kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+        kmeans = KMeans(
+            n_clusters=k,
+            init=kmeans_cfg["init"],
+            n_init=kmeans_cfg["n_init"],
+            max_iter=kmeans_cfg["max_iter"],
+            random_state=random_state,
+        )
         labels = kmeans.fit_predict(X_scaled)
         
         metrics = evaluate_clustering(X_scaled, labels)
@@ -203,7 +236,7 @@ def run_full_pipeline(output_dir="reports", models_dir="notebooks/models"):
 
     # ========== STEP 6: PCA FOR VISUALIZATION ==========
     logger.info("\n[STEP 5] Applying PCA for visualization...")
-    pca_final = PCA(n_components=N_COMP, random_state=42)
+    pca_final = PCA(n_components=n_comp, random_state=random_state)
     X_pca = pca_final.fit_transform(X_scaled)
     logger.info(f"PCA variance explained: {pca_final.explained_variance_ratio_.sum():.2%}")
 
@@ -247,7 +280,7 @@ def run_full_pipeline(output_dir="reports", models_dir="notebooks/models"):
         "model": model_final,
         "scaler": scaler,
         "pca": pca_final,
-        "n_components": N_COMP,
+        "n_components": n_comp,
         "feature_cols": feature_cols,
         "cluster_names": {str(k): v for k, v in cluster_names.items()},
         "segment_actions": {str(k): v for k, v in segment_actions.items()},
@@ -259,9 +292,10 @@ def run_full_pipeline(output_dir="reports", models_dir="notebooks/models"):
         pickle.dump(final_pipeline, f)
     logger.info(f"✓ Saved: {pipeline_path}")
 
-    # 5. Cluster names JSON
-    with open(os.path.join(models_dir, "cluster_names.json"), 'w') as f:
-        json.dump(cluster_names, f, ensure_ascii=False, indent=2)
+    # 5. Cluster names JSON (clés str : numpy int / int32 non sérialisables par json)
+    cluster_names_json = {str(int(k)): v for k, v in cluster_names.items()}
+    with open(os.path.join(models_dir, "cluster_names.json"), 'w', encoding="utf-8") as f:
+        json.dump(cluster_names_json, f, ensure_ascii=False, indent=2)
     logger.info(f"✓ Saved: {models_dir}/cluster_names.json")
 
     logger.info("\n" + "=" * 80)

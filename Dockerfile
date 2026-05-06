@@ -7,9 +7,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # Dépendances légères (évite mlflow/sphinx/streamlit dans l’image API)
+ENV PIP_DEFAULT_TIMEOUT=180 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
 COPY requirements-api.txt .
 RUN pip install --no-cache-dir --upgrade pip \
-  && pip install --no-cache-dir -r requirements-api.txt
+  && pip install --no-cache-dir --prefer-binary -r requirements-api.txt
 
 COPY src/ ./src/
 COPY scripts/ ./scripts/
@@ -17,8 +20,11 @@ COPY config/ ./config/
 COPY templates/ ./templates/
 COPY project.py setup.cfg ./
 
-# Tout le dossier notebooks/ (models + reports si versionnés ; sinon le build ne casse pas)
-COPY notebooks/ ./notebooks/
+# Seulement ce que l’API charge (évite ~15 .pkl + PNG inutiles → build Railway plus fiable)
+RUN mkdir -p notebooks/models notebooks/reports
+COPY notebooks/models/final_pipeline.pkl ./notebooks/models/
+COPY notebooks/models/cluster_names.json ./notebooks/models/
+COPY notebooks/reports/ ./notebooks/reports/
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \

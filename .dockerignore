@@ -1,21 +1,26 @@
-__pycache__/
-*.pyc
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.venv/
-venv/
-env/
-.env
-.git/
-.github/
-.cursor/
-logs/
-
-# Exclude heavy data files but keep models and reports
-data/
+# Réduit le contexte envoyé à Railway (évite timeouts / builds trop lourds)
+.git
+.github
+**/__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+htmlcov
+.coverage
+mlruns
+venv
+.venv
+env
+data
+logs
+tests
+docker
+*.md
+# API : pas besoin des figures ni des autres .pkl du notebook
+notebooks/figures
 notebooks/*.ipynb
-notebooks/mlruns/
-notebooks/data/
-
-# Keep model + reports (do NOT ignore notebooks/models/ and notebooks/reports/)
+notebooks/dashboard.py
+notebooks/models/CAH_*.pkl
+notebooks/models/DBSCAN_*.pkl
+notebooks/models/HDBSCAN_*.pkl
+notebooks/models/KMeans_*.pkl

@@ -160,7 +160,16 @@ def validate_data(df: pd.DataFrame) -> bool:
 
 
 class DataPreprocessor:
-    """Main class for data preprocessing pipeline"""
+    """
+    Prétraitement aligné sur la chaîne « données → modèle » du notebook (après l’EDA).
+
+    L’EDA (distributions, corrélations, graphiques) dans Jupyter est exploratoire et ne
+    modifie en général pas le CSV `base_final.csv` : ce module charge ce fichier,
+    convertit les dates, valide, déduplique les `order_id`, puis enchaîne avec
+    `FeatureEngineer`. La winsorisation listée dans `config.yaml` (`preprocessing.cols_to_winsorize`)
+    vise des colonnes agrégées / autre jeu : elle n’est pas appliquée ici sur les
+    lignes commande de `base_final.csv` tant que ces colonnes n’y sont pas présentes.
+    """
     
     def __init__(self, config=None):
         """

@@ -212,9 +212,30 @@ def calculate_geographic_metrics(df: pd.DataFrame, reference_coords: Tuple[float
 class FeatureEngineer:
     """Main class for feature engineering"""
     
+    # Columns expected by downstream metric helpers (API / sparse JSON payloads may omit them)
+    _OPTIONAL_RAW_COLUMNS = [
+        "order_delivered_customer_date",
+        "order_estimated_delivery_date",
+        "review_score",
+        "review_creation_date",
+        "customer_lat",
+        "customer_lng",
+    ]
+    
     def __init__(self, config=None):
         """Initialize with configuration"""
         self.config = config or load_config()
+    
+    def _ensure_raw_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Add optional Olist columns as NA so feature helpers never KeyError on sparse input."""
+        df = df.copy()
+        for col in self._OPTIONAL_RAW_COLUMNS:
+            if col not in df.columns:
+                if col in ("order_delivered_customer_date", "order_estimated_delivery_date", "review_creation_date"):
+                    df[col] = pd.NaT
+                else:
+                    df[col] = np.nan
+        return df
     
     def engineer_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -226,6 +247,8 @@ class FeatureEngineer:
         Returns:
             DataFrame with engineered features
         """
+        df = self._ensure_raw_columns(df)
+        
         # Calculate snapshot date
         snapshot_date = df['order_purchase_timestamp'].max() + pd.Timedelta(days=1)
         dataset_duration = (df['order_purchase_timestamp'].max() - df['order_purchase_timestamp'].min()).days
@@ -236,8 +259,13 @@ class FeatureEngineer:
         logger.info(f"Snapshot date: {snapshot_date.date()}")
         logger.info(f"Dataset duration: {dataset_duration} days")
         
-        # Start with RFM
+        # Start with RFM (delivered orders only)
         df_client = calculate_rfm(df, snapshot_date)
+        if df_client.empty:
+            raise ValueError(
+                "Impossible de calculer le RFM : aucune commande avec order_status='delivered'. "
+                "Ajoutez au moins une commande livrée (même synthétique) pour la prédiction."
+            )
         
         # Add delivery metrics
         avg_del, late_rate, avg_delta = calculate_delivery_metrics(df)

@@ -84,6 +84,13 @@ pca:
   n_components: 2  # For visualization
   explained_variance_threshold: 0.85
 
+# Reproduction notebook « Modélisons » — utilisé par scripts/full_pipeline.py
+# (EDA dans le notebook = exploratoire ; la chaîne figée pour résultats identiques = prétraitement + features + ce bloc)
+notebook_reproduction:
+  k_min: 4
+  k_max: 8
+  pca_n_components: 2
+
 # Evaluation Metrics
 evaluation:
   silhouette_min: -1.0

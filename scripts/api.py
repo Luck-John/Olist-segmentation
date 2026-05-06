@@ -19,7 +19,7 @@ import pandas as pd
 import numpy as np
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import uvicorn
@@ -81,6 +81,8 @@ class SegmentationResponse(BaseModel):
     pca_1: Optional[float] = None
     pca_2: Optional[float] = None
     confidence: Optional[float] = None
+    # Populated for POST /predict-raw when features are computed server-side
+    engineered_features: Optional[Dict[str, float]] = None
 
 
 class ClusterProfile(BaseModel):
@@ -365,20 +367,52 @@ def _startup_load_assets():
 # ============================================================================
 
 @app.get("/")
-def root():
-    """Root endpoint to avoid 404 on base URL."""
+def root(request: Request):
+    """
+    Page d'accueil de l'API (JSON). Ce n'est pas une erreur : le navigateur affiche ce résumé.
+    Pour saisir des données brutes et laisser le pipeline calculer les features puis le segment, ouvrir /form.
+    """
+    base = str(request.base_url).rstrip("/")
     return {
         "name": "Customer Segmentation API",
         "status": "ok",
-        "docs": "/docs",
-        "health": "/health",
-        "model_info": "/model-info",
-        "predict": "/predict",
-        "predict_raw": "/predict-raw",
-        "ui": "/ui",
-        "form": "/form",
-        "simple": "/simple",
+        "message": (
+            "L'API est joignable. Ce JSON est normal sur la racine /. "
+            "Ouvrez /form dans le navigateur pour le formulaire (données brutes → features → segment), "
+            "ou /docs pour tester les endpoints."
+        ),
+        "workflow": {
+            "step_1": "L'utilisateur envoie des lignes commande brutes (JSON) ou remplit le formulaire /form",
+            "step_2": "Le serveur calcule les features (RFM, livraison, avis, CLV, etc.) comme dans le pipeline",
+            "step_3": "Le modèle KMeans assigne le segment client",
+            "endpoint": "POST /predict-raw",
+        },
+        "links": {
+            "form_saisie_donnees_brutes": f"{base}/form",
+            "swagger": f"{base}/docs",
+            "health": f"{base}/health",
+            "model_info": f"{base}/model-info",
+            "predict_raw": f"{base}/predict-raw",
+            "predict_features_deja_calculees": f"{base}/predict",
+        },
+        "paths": {
+            "docs": "/docs",
+            "health": "/health",
+            "model_info": "/model-info",
+            "predict": "/predict",
+            "predict_raw": "/predict-raw",
+            "form": "/form",
+            "ui": "/ui",
+            "simple": "/simple",
+            "app_redirect": "/app",
+        },
     }
+
+
+@app.get("/app")
+def app_entry():
+    """Raccourci : redirige vers le formulaire données brutes → prédiction."""
+    return RedirectResponse(url="/form", status_code=307)
 
 
 @app.get("/ui", response_class=HTMLResponse)
@@ -647,16 +681,20 @@ def custom_docs():
         },
         "example_features": {
             "Recency": 180,
-            "Monetary": 5000,
             "Frequency": 15,
-            "avg_review_score": 4.5,
+            "Monetary": 5000,
             "avg_delivery_days": 10,
-            "avg_installments": 2.0,
-            "avg_item_price": 150.0,
-            "CLV_estimate": 10000.0,
             "late_delivery_rate": 0.05,
-            "customer_tenure": 365
-        }
+            "avg_delivery_delta": 2.0,
+            "avg_review_score_full": 4.5,
+            "has_full_review": 1,
+            "avg_review_score_available": 4.5,
+            "has_available_review": 1,
+            "CLV": 10000.0,
+            "dist_sao_paulo": 120.0,
+        },
+        "model_note": "Direct POST /predict expects exactly the feature_cols from GET /model-info (trained pipeline). "
+        "POST /predict-raw accepts order-level rows and computes these features.",
     }
 
 

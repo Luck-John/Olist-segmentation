@@ -43,11 +43,19 @@ def run_tests():
     )
 
 
-def run_pipeline():
-    """Run the main pipeline"""
+def run_notebook_reproduction_pipeline():
+    """Pipeline aligné notebook Modélisons → notebooks/reports + notebooks/models."""
+    return run_command(
+        [sys.executable, "scripts/full_pipeline.py"],
+        "Running full pipeline (notebook Modélisons reproduction)",
+    )
+
+
+def run_pipeline_mlflow():
+    """Pipeline MLflow + KMeans (k_min..k_max depuis config, souvent 2..10)."""
     return run_command(
         [sys.executable, "scripts/run_pipeline.py"],
-        "Running main pipeline"
+        "Running MLflow pipeline (run_pipeline.py)",
     )
 
 
@@ -205,7 +213,8 @@ Commands:
   test-local    Run all tests locally (like GitHub Actions)
   lint          Check code quality (flake8, black, isort)
   format        Format code (black, isort)
-  pipeline      Run the main clustering pipeline
+  pipeline      Reproduce notebook Modélisons (full_pipeline.py → notebooks/)
+  pipeline-mlflow  Alternate pipeline with MLflow (k range from config, often 2–10)
   mlflow        Start MLFlow UI server
   dashboard     Start Streamlit dashboard
   docker-build  Build Docker image
@@ -217,7 +226,8 @@ Examples:
   python project.py setup          # First time setup
   python project.py test           # Run all tests
   python project.py test-local     # Run like GitHub Actions
-  python project.py pipeline       # Execute pipeline
+  python project.py pipeline       # Same outputs as notebook Modélisons
+  python project.py pipeline-mlflow  # MLflow + wider k range
   python project.py mlflow         # Start MLFlow UI
   python project.py dashboard      # Start Streamlit dashboard
   python project.py docker-up      # Start all services
@@ -243,7 +253,8 @@ def main():
         'test-local': test_local,
         'lint': lint_code,
         'format': format_code,
-        'pipeline': run_pipeline,
+        'pipeline': run_notebook_reproduction_pipeline,
+        'pipeline-mlflow': run_pipeline_mlflow,
         'mlflow': start_mlflow,
         'dashboard': start_dashboard,
         'docker-build': docker_build,

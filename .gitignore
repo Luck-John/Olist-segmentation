@@ -145,7 +145,6 @@ logs/
 *.tmp
 
 # Docker
-.dockerignore
 docker-compose.override.yml
 
 # OS

@@ -1,5 +1,8 @@
 """
-Main pipeline script - Automated execution of data processing and clustering
+Pipeline avec MLflow et plage KMeans issue de config (souvent k=2..10).
+
+Pour reproduire le notebook « Modélisons » (même sorties que notebooks/reports/),
+utiliser plutôt : ``python scripts/full_pipeline.py`` ou ``python project.py pipeline``.
 """
 import os
 import sys
