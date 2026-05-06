@@ -24,6 +24,7 @@ import uvicorn
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.features.engineering import FeatureEngineer
 from src.utils.config import Config, get_logger
 
 logger = get_logger(__name__)
@@ -40,6 +41,32 @@ class CustomerData(BaseModel):
 class BulkPredictionRequest(BaseModel):
     """Request model for bulk predictions"""
     customers: List[Dict[str, float]]
+
+
+class RawOrder(BaseModel):
+    """
+    Raw order-level record used to derive customer features.
+    The API will compute engineered features, then run clustering prediction.
+    """
+    order_id: str
+    customer_unique_id: str
+    order_status: str
+
+    order_purchase_timestamp: str
+    payment_value: float
+
+    # Optional-but-recommended fields for feature engineering
+    order_delivered_customer_date: Optional[str] = None
+    order_estimated_delivery_date: Optional[str] = None
+    review_score: Optional[float] = None
+    review_creation_date: Optional[str] = None
+    customer_lat: Optional[float] = None
+    customer_lng: Optional[float] = None
+
+
+class RawPredictionRequest(BaseModel):
+    """Request model for raw input prediction (order-level records)."""
+    orders: List[RawOrder]
 
 
 class SegmentationResponse(BaseModel):
@@ -179,6 +206,53 @@ class SegmentationAPI:
             "confidence": float(confidence),
         }
 
+    def predict_from_raw_orders(self, orders: List[Dict]) -> Dict:
+        """
+        Compute features from raw order-level records and predict.
+
+        Expected raw columns per order:
+        - order_id, customer_unique_id, order_status
+        - order_purchase_timestamp, payment_value
+        - optional delivery/review/geographic columns (see RawOrder)
+        """
+        if not orders:
+            raise ValueError("No orders provided")
+
+        df = pd.DataFrame(orders)
+        if "customer_unique_id" not in df.columns:
+            raise ValueError("Missing customer_unique_id in raw orders")
+
+        customer_ids = df["customer_unique_id"].dropna().unique().tolist()
+        if len(customer_ids) != 1:
+            raise ValueError(f"Raw prediction expects exactly 1 customer_unique_id, got {len(customer_ids)}")
+
+        # Convert dates to datetime where possible
+        for col in [
+            "order_purchase_timestamp",
+            "order_delivered_customer_date",
+            "order_estimated_delivery_date",
+            "review_creation_date",
+        ]:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], format="mixed", errors="coerce")
+
+        engineer = FeatureEngineer(self.config.get())
+        df_features = engineer.engineer_features(df)
+
+        # Extract feature vector for the single customer
+        customer_id = customer_ids[0]
+        row = df_features[df_features["customer_unique_id"] == customer_id]
+        if row.empty:
+            raise ValueError("Could not compute features for customer_unique_id")
+
+        row = row.iloc[0]
+        feature_cols = self.pipeline["feature_cols"]
+        features = {col: float(row[col]) for col in feature_cols}
+
+        result = self.predict_segment(features)
+        result["customer_id"] = customer_id
+        return result
+
     def get_cluster_profiles(self) -> List[ClusterProfile]:
         """Get profiles for all clusters"""
         if self.cluster_profiles_mean is None:
@@ -276,6 +350,20 @@ def _startup_load_assets():
 # API ENDPOINTS
 # ============================================================================
 
+@app.get("/")
+def root():
+    """Root endpoint to avoid 404 on base URL."""
+    return {
+        "name": "Customer Segmentation API",
+        "status": "ok",
+        "docs": "/docs",
+        "health": "/health",
+        "model_info": "/model-info",
+        "predict": "/predict",
+        "predict_raw": "/predict-raw",
+    }
+
+
 @app.get("/health")
 def health_check():
     """Health check endpoint"""
@@ -305,6 +393,24 @@ def predict(customer_data: CustomerData):
         return SegmentationResponse(**result)
     except Exception as e:
         logger.error(f"Prediction error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/predict-raw", response_model=SegmentationResponse)
+def predict_raw(request: RawPredictionRequest):
+    """
+    Predict customer segment from raw order-level records.
+    The API computes engineered customer features before prediction.
+    """
+    if not segmentation_api:
+        raise HTTPException(status_code=503, detail="API not initialized")
+
+    try:
+        orders = [o.model_dump() for o in request.orders]
+        result = segmentation_api.predict_from_raw_orders(orders)
+        return SegmentationResponse(**result)
+    except Exception as e:
+        logger.error(f"Raw prediction error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 
