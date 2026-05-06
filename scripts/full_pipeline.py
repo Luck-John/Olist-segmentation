@@ -49,34 +49,49 @@ def analyze_and_name_clusters(df_clean, model_labels, feature_cols):
     Analyze clusters and assign meaningful names based on profiles
     Returns cluster_names dict and segment_actions dict
     """
-    PROFILE_COLS = [
-        "Recency", "Monetary", "avg_review_score", "avg_delivery_days",
-        "avg_installments", "avg_item_price", "CLV_estimate",
-        "late_delivery_rate", "customer_tenure"
-    ]
-
     # Add cluster labels
     df_analysis = df_clean.copy()
     df_analysis["cluster"] = model_labels
 
-    # Calculate profiles
-    profile_mean = df_analysis.groupby("cluster")[PROFILE_COLS].mean().round(2)
-    profile_median = df_analysis.groupby("cluster")[PROFILE_COLS].median().round(2)
+    # Use available columns for profiling
+    available_profile_cols = []
+    for col in ["Recency", "Monetary", "Frequency", "avg_review_score", "avg_delivery_days",
+                "avg_installments", "avg_item_price", "CLV_estimate",
+                "late_delivery_rate", "customer_tenure"]:
+        if col in df_analysis.columns:
+            available_profile_cols.append(col)
+    
+    logger.info(f"Profile columns available: {available_profile_cols}")
 
-    # Calculate quantiles for naming logic
-    rec_q = df_clean["Recency"].quantile([0.25, 0.50, 0.75]).values
-    mon_q = df_clean["Monetary"].quantile([0.25, 0.50, 0.75]).values
-    rev_med = df_clean["avg_review_score"].median()
-    del_med = df_clean["avg_delivery_days"].median()
+    # Calculate profiles only with available columns
+    profile_mean = df_analysis.groupby("cluster")[available_profile_cols].mean().round(2)
+    profile_median = df_analysis.groupby("cluster")[available_profile_cols].median().round(2)
+
+    # Calculate quantiles for naming logic (use available columns)
+    if "Recency" in df_analysis.columns:
+        rec_q = df_analysis["Recency"].quantile([0.25, 0.50, 0.75]).values
+    else:
+        rec_q = [0, 180, 365]
+    
+    if "Monetary" in df_analysis.columns:
+        mon_q = df_analysis["Monetary"].quantile([0.25, 0.50, 0.75]).values
+    else:
+        mon_q = [0, 5000, 10000]
+    
+    if "avg_review_score" in df_analysis.columns:
+        rev_med = df_analysis["avg_review_score"].median()
+    else:
+        rev_med = 4.0
 
     # Assign segment names based on RFM analysis
     cluster_names = {}
     segment_actions = {}
 
     for cluster_id in sorted(df_analysis["cluster"].unique()):
-        rec_val = profile_median.loc[cluster_id, "Recency"]
-        mon_val = profile_median.loc[cluster_id, "Monetary"]
-        rev_val = profile_median.loc[cluster_id, "avg_review_score"]
+        # Get values safely
+        rec_val = profile_median.loc[cluster_id, "Recency"] if "Recency" in available_profile_cols else 0
+        mon_val = profile_median.loc[cluster_id, "Monetary"] if "Monetary" in available_profile_cols else 0
+        rev_val = profile_median.loc[cluster_id, "avg_review_score"] if "avg_review_score" in available_profile_cols else 4.0
 
         # Naming logic
         if mon_val > mon_q[2] and rec_val < rec_q[1]:
@@ -97,6 +112,8 @@ def analyze_and_name_clusters(df_clean, model_labels, feature_cols):
 
         cluster_names[cluster_id] = name
         segment_actions[cluster_id] = action
+        
+        logger.info(f"Cluster {cluster_id}: {name} ({action})")
 
     return cluster_names, segment_actions, profile_mean, profile_median
 

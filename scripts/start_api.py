@@ -5,7 +5,23 @@ Script to start the Customer Segmentation API
 import os
 import sys
 import subprocess
+import socket
 from pathlib import Path
+
+def _is_port_in_use(host: str, port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.2)
+        return s.connect_ex((host, port)) == 0
+
+
+def _pick_port(host: str, preferred_port: int) -> int:
+    port = preferred_port
+    for _ in range(50):
+        if not _is_port_in_use(host, port):
+            return port
+        port += 1
+    return preferred_port
+
 
 def main():
     """Start the API with uvicorn"""
@@ -22,7 +38,9 @@ def main():
     os.environ.setdefault("API_PORT", "8000")
     
     host = os.getenv("API_HOST")
-    port = os.getenv("API_PORT")
+    port = int(os.getenv("API_PORT"))
+    port = _pick_port(host, port)
+    os.environ["API_PORT"] = str(port)
     
     print(f"🚀 Starting Customer Segmentation API on {host}:{port}")
     print(f"📊 Swagger UI available at: http://{host}:{port}/docs")

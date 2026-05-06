@@ -10,7 +10,6 @@ Serves the trained clustering model and provides endpoints for:
 import os
 import sys
 import pickle
-import json
 from pathlib import Path
 from typing import List, Dict, Optional
 
@@ -25,7 +24,6 @@ import uvicorn
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.features.engineering import FeatureEngineer
 from src.utils.config import Config, get_logger
 
 logger = get_logger(__name__)
@@ -253,16 +251,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize API
-try:
-    segmentation_api = SegmentationAPI(
-        model_dir="notebooks/models",
-        reports_dir="notebooks/reports"
-    )
-    logger.info("API initialized successfully")
-except Exception as e:
-    logger.error(f"Failed to initialize API: {e}")
-    segmentation_api = None
+segmentation_api: Optional[SegmentationAPI] = None
+
+
+@app.on_event("startup")
+def _startup_load_assets():
+    """
+    Load model + reports at server startup (not at import time).
+    This keeps `import scripts.api` fast and makes failures visible in /health.
+    """
+    global segmentation_api
+    try:
+        segmentation_api = SegmentationAPI(
+            model_dir="notebooks/models",
+            reports_dir="notebooks/reports",
+        )
+        logger.info("API initialized successfully")
+    except Exception as e:
+        logger.exception(f"Failed to initialize API: {e}")
+        segmentation_api = None
 
 
 # ============================================================================
