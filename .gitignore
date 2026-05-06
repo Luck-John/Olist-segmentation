@@ -140,7 +140,8 @@ models/*.h5
 data/output/
 data/clustered_data.csv
 logs/
-reports/
+# Ignorer seulement reports/ à la racine du repo (pas notebooks/reports/ pour le déploiement Docker)
+/reports/
 *.tmp
 
 # Docker
