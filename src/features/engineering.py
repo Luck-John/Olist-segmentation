@@ -229,6 +229,9 @@ class FeatureEngineer:
         # Calculate snapshot date
         snapshot_date = df['order_purchase_timestamp'].max() + pd.Timedelta(days=1)
         dataset_duration = (df['order_purchase_timestamp'].max() - df['order_purchase_timestamp'].min()).days
+        if dataset_duration <= 0:
+            # Avoid division by zero in CLV for single-order / short windows
+            dataset_duration = 1
         
         logger.info(f"Snapshot date: {snapshot_date.date()}")
         logger.info(f"Dataset duration: {dataset_duration} days")
@@ -264,6 +267,19 @@ class FeatureEngineer:
         for col in numeric_cols:
             if df_client[col].isna().any():
                 df_client[col] = df_client[col].fillna(df_client[col].median())
+
+        # If some columns are still NaN (e.g., all-NaN medians on small samples),
+        # apply safe fallbacks to keep features usable for prediction.
+        if "avg_review_score_available" in df_client.columns and df_client["avg_review_score_available"].isna().any():
+            df_client["avg_review_score_available"] = df_client["avg_review_score_available"].fillna(
+                df_client.get("avg_review_score_full")
+            )
+        if "has_available_review" in df_client.columns and df_client["has_available_review"].isna().any():
+            df_client["has_available_review"] = df_client["has_available_review"].fillna(
+                df_client.get("has_full_review", 0)
+            )
+        if "dist_sao_paulo" in df_client.columns and df_client["dist_sao_paulo"].isna().any():
+            df_client["dist_sao_paulo"] = df_client["dist_sao_paulo"].fillna(0)
         
         logger.info(f"Features engineered. Final shape: {df_client.shape}")
         return df_client

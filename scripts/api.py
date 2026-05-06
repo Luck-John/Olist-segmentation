@@ -9,15 +9,17 @@ Serves the trained clustering model and provides endpoints for:
 
 import os
 import sys
+import json
 import pickle
 from pathlib import Path
 from typing import List, Dict, Optional
 
 import pandas as pd
 import numpy as np
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import uvicorn
 
@@ -247,10 +249,19 @@ class SegmentationAPI:
 
         row = row.iloc[0]
         feature_cols = self.pipeline["feature_cols"]
-        features = {col: float(row[col]) for col in feature_cols}
+        features = {}
+        for col in feature_cols:
+            val = float(row[col])
+            if not np.isfinite(val):
+                raise ValueError(
+                    f"Engineered feature '{col}' is invalid (NaN/inf). "
+                    "Provide more raw data (more orders) and/or required fields (delivery/review/geo)."
+                )
+            features[col] = val
 
         result = self.predict_segment(features)
         result["customer_id"] = customer_id
+        result["engineered_features"] = features
         return result
 
     def get_cluster_profiles(self) -> List[ClusterProfile]:
@@ -316,6 +327,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
+templates = Jinja2Templates(directory="templates")
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -361,7 +374,81 @@ def root():
         "model_info": "/model-info",
         "predict": "/predict",
         "predict_raw": "/predict-raw",
+        "ui": "/ui",
     }
+
+
+@app.get("/ui", response_class=HTMLResponse)
+def ui_home(request: Request):
+    return templates.TemplateResponse(
+        "ui.html",
+        {
+            "request": request,
+            "prediction": None,
+            "features": None,
+            "error": None,
+            "raw_json": None,
+            "base_url": str(request.base_url).rstrip("/"),
+        },
+    )
+
+
+@app.post("/ui/predict", response_class=HTMLResponse)
+def ui_predict(request: Request, raw_json: str = Form(...)):
+    if not segmentation_api:
+        return templates.TemplateResponse(
+            "ui.html",
+            {
+                "request": request,
+                "prediction": None,
+                "features": None,
+                "error": "API not initialized (503).",
+                "raw_json": raw_json,
+                "base_url": str(request.base_url).rstrip("/"),
+            },
+            status_code=503,
+        )
+
+    try:
+        orders = json.loads(raw_json)
+        if not isinstance(orders, list):
+            raise ValueError("JSON must be a list of orders (array).")
+
+        result = segmentation_api.predict_from_raw_orders(orders)
+        prediction = {
+            "customer_id": result.get("customer_id"),
+            "cluster": result.get("cluster"),
+            "segment_name": result.get("segment_name"),
+            "segment_action": result.get("segment_action"),
+            "pca_1": result.get("pca_1"),
+            "pca_2": result.get("pca_2"),
+            "confidence": result.get("confidence"),
+        }
+
+        return templates.TemplateResponse(
+            "ui.html",
+            {
+                "request": request,
+                "prediction": prediction,
+                "features": result.get("engineered_features"),
+                "error": None,
+                "raw_json": raw_json,
+                "base_url": str(request.base_url).rstrip("/"),
+            },
+        )
+    except Exception as e:
+        return templates.TemplateResponse(
+            "ui.html",
+            {
+                "request": request,
+                "prediction": None,
+                "features": None,
+                "error": str(e),
+                "raw_json": raw_json,
+                "base_url": str(request.base_url).rstrip("/"),
+            },
+            status_code=400,
+        )
 
 
 @app.get("/health")
