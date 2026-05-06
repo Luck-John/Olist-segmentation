@@ -376,6 +376,8 @@ def root():
         "predict": "/predict",
         "predict_raw": "/predict-raw",
         "ui": "/ui",
+        "form": "/form",
+        "simple": "/simple",
     }
 
 
@@ -390,6 +392,30 @@ def ui_home(request: Request):
             "error": None,
             "raw_json": None,
             "raw_csv": None,
+            "base_url": str(request.base_url).rstrip("/"),
+        },
+    )
+
+
+@app.get("/form", response_class=HTMLResponse)
+def ui_form(request: Request):
+    """Form-based UI for easier customer data input"""
+    return templates.TemplateResponse(
+        "ui_form.html",
+        {
+            "request": request,
+            "base_url": str(request.base_url).rstrip("/"),
+        },
+    )
+
+
+@app.get("/simple", response_class=HTMLResponse)
+def ui_simple(request: Request):
+    """Simple form-based UI for customer data input"""
+    return templates.TemplateResponse(
+        "ui_simple.html",
+        {
+            "request": request,
             "base_url": str(request.base_url).rstrip("/"),
         },
     )

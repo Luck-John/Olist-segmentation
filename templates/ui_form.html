@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Olist Segmentation - Formulaire Client</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100" x-data="customerForm()">
+    <div class="mx-auto max-w-6xl px-6 py-10">
+      <!-- Header -->
+      <div class="flex flex-col gap-2 mb-8">
+        <div class="inline-flex items-center gap-2">
+          <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-rose-500"></div>
+          <div>
+            <div class="text-xl font-semibold">Olist Segmentation API</div>
+            <div class="text-sm text-slate-300">Formulaire Client - Prédiction de Segment</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <!-- Formulaire de saisie -->
+        <div class="lg:col-span-2">
+          <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 shadow-xl shadow-black/20">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-lg font-semibold">Informations Client</h2>
+              <button @click="resetForm()" class="text-sm text-slate-400 hover:text-slate-200">Réinitialiser</button>
+            </div>
+
+            <form @submit.prevent="submitForm()" class="space-y-6">
+              <!-- Informations Client -->
+              <div class="space-y-4">
+                <h3 class="text-sm font-medium text-indigo-300">Identité Client</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">ID Client Unique *</label>
+                    <input type="text" x-model="customer.customer_unique_id" required
+                           class="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                           placeholder="ex: c123456">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">ID Commande *</label>
+                    <input type="text" x-model="customer.order_id" required
+                           class="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                           placeholder="ex: order_001">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Détails Commande -->
+              <div class="space-y-4">
+                <h3 class="text-sm font-medium text-indigo-300">Détails Commande</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Statut Commande *</label>
+                    <select x-model="customer.order_status" required
+                            class="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                      <option value="">Sélectionner...</option>
+                      <option value="delivered">Livrée</option>
+                      <option value="shipped">Expédiée</option>
+                      <option value="processing">En traitement</option>
+                      <option value="canceled">Annulée</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Montant Paiement (R$) *</label>
+                    <input type="number" x-model="customer.payment_value" required step="0.01" min="0"
+                           class="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                           placeholder="ex: 150.50">
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Date Achat *</label>
+                    <input type="datetime-local" x-model="customer.order_purchase_timestamp" required
+                           class="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Date Livraison Estimée</label>
+                    <input type="datetime-local" x-model="customer.order_estimated_delivery_date"
+                           class="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Date Livraison Réelle</label>
+                    <input type="datetime-local" x-model="customer.order_delivered_customer_date"
+                           class="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Score Review (1-5)</label>
+                    <input type="number" x-model="customer.review_score" min="1" max="5" step="1"
+                           class="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                           placeholder="ex: 4">
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-200 mb-2">Date Review</label>
+                  <input type="datetime-local" x-model="customer.review_creation_date"
+                           class="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                </div>
+              </div>
+
+              <!-- Localisation -->
+              <div class="space-y-4">
+                <h3 class="text-sm font-medium text-indigo-300">Localisation (Optionnel)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Latitude</label>
+                    <input type="number" x-model="customer.customer_lat" step="0.000001"
+                           class="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                           placeholder="ex: -23.550520">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Longitude</label>
+                    <input type="number" x-model="customer.customer_lng" step="0.000001"
+                           class="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                           placeholder="ex: -46.633308">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bouton Submit -->
+              <div class="flex justify-end">
+                <button type="submit" :disabled="loading"
+                        class="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <template x-if="!loading">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                  </template>
+                  <template x-if="loading">
+                    <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </template>
+                  <span x-text="loading ? 'Calcul en cours...' : 'Calculer Features + Prédire Segment'"></span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Résultats -->
+        <div class="lg:col-span-1">
+          <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 shadow-xl shadow-black/20">
+            <h2 class="text-lg font-semibold mb-4">Résultats</h2>
+
+            <!-- Erreur -->
+            <div x-show="error" x-transition class="rounded-xl border border-rose-700/50 bg-rose-950/30 p-4 mb-4">
+              <div class="text-sm font-semibold text-rose-200">Erreur</div>
+              <pre class="mt-2 whitespace-pre-wrap text-xs text-rose-200/90" x-text="error"></pre>
+            </div>
+
+            <!-- Prédiction -->
+            <div x-show="prediction" x-transition class="space-y-4">
+              <div class="rounded-xl border border-emerald-700/40 bg-emerald-950/20 p-4">
+                <div class="text-sm font-semibold text-emerald-200 mb-3">Prédiction</div>
+                <div class="space-y-3">
+                  <div class="rounded-lg bg-slate-950/40 p-3">
+                    <div class="text-xs text-slate-400">Cluster</div>
+                    <div class="mt-1 font-semibold text-lg" x-text="prediction.cluster"></div>
+                  </div>
+                  <div class="rounded-lg bg-slate-950/40 p-3">
+                    <div class="text-xs text-slate-400">Segment</div>
+                    <div class="mt-1 font-semibold" x-text="prediction.segment_name"></div>
+                  </div>
+                  <div class="rounded-lg bg-slate-950/40 p-3">
+                    <div class="text-xs text-slate-400">Action Recommandée</div>
+                    <div class="mt-1 font-semibold text-indigo-300" x-text="prediction.segment_action"></div>
+                  </div>
+                  <div class="rounded-lg bg-slate-950/40 p-3">
+                    <div class="text-xs text-slate-400">Confiance</div>
+                    <div class="mt-1 font-semibold" x-text="(prediction.confidence * 100).toFixed(2) + '%'"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Features calculées -->
+              <div x-show="features" x-transition>
+                <div class="text-sm font-semibold text-slate-200 mb-2">Features Calculées</div>
+                <div class="max-h-64 overflow-auto rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                  <template x-for="[key, value] in Object.entries(features)" :key="key">
+                    <div class="flex justify-between py-1 text-xs">
+                      <span class="text-slate-400" x-text="key"></span>
+                      <span class="text-slate-100 font-mono" x-text="typeof value === 'number' ? value.toFixed(2) : value"></span>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+
+            <!-- Message par défaut -->
+            <div x-show="!prediction && !error" class="text-sm text-slate-400">
+              Remplissez le formulaire et cliquez sur "Calculer Features + Prédire Segment" pour voir les résultats.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructions -->
+      <div class="mt-8 rounded-2xl border border-slate-800 bg-slate-900/20 p-6">
+        <h3 class="text-sm font-semibold text-slate-200 mb-3">Comment ça marche ?</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-slate-400">
+          <div class="flex gap-3">
+            <div class="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500 text-white text-xs flex items-center justify-center font-semibold">1</div>
+            <div>
+              <div class="font-medium text-slate-300">Saisissez les données</div>
+              <div>Remplissez les informations du client et de sa commande</div>
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500 text-white text-xs flex items-center justify-center font-semibold">2</div>
+            <div>
+              <div class="font-medium text-slate-300">Feature Engineering</div>
+              <div>L'API calcule automatiquement les features (RFM, livraison, reviews...)</div>
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500 text-white text-xs flex items-center justify-center font-semibold">3</div>
+            <div>
+              <div class="font-medium text-slate-300">Prédiction</div>
+              <div>Le modèle prédit le segment client et l'action marketing recommandée</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function customerForm() {
+        return {
+          loading: false,
+          error: null,
+          prediction: null,
+          features: null,
+          customer: {
+            customer_unique_id: '',
+            order_id: '',
+            order_status: '',
+            order_purchase_timestamp: '',
+            payment_value: '',
+            order_delivered_customer_date: '',
+            order_estimated_delivery_date: '',
+            review_score: '',
+            review_creation_date: '',
+            customer_lat: '',
+            customer_lng: ''
+          },
+
+          resetForm() {
+            this.customer = {
+              customer_unique_id: '',
+              order_id: '',
+              order_status: '',
+              order_purchase_timestamp: '',
+              payment_value: '',
+              order_delivered_customer_date: '',
+              order_estimated_delivery_date: '',
+              review_score: '',
+              review_creation_date: '',
+              customer_lat: '',
+              customer_lng: ''
+            };
+            this.error = null;
+            this.prediction = null;
+            this.features = null;
+          },
+
+          async submitForm() {
+            this.loading = true;
+            this.error = null;
+            this.prediction = null;
+            this.features = null;
+
+            try {
+              // Préparer les données
+              const orderData = { ...this.customer };
+              
+              // Convertir les nombres
+              if (orderData.payment_value) orderData.payment_value = parseFloat(orderData.payment_value);
+              if (orderData.review_score) orderData.review_score = parseInt(orderData.review_score);
+              if (orderData.customer_lat) orderData.customer_lat = parseFloat(orderData.customer_lat);
+              if (orderData.customer_lng) orderData.customer_lng = parseFloat(orderData.customer_lng);
+
+              // Supprimer les champs vides
+              Object.keys(orderData).forEach(key => {
+                if (orderData[key] === '' || orderData[key] === null || orderData[key] === undefined) {
+                  delete orderData[key];
+                }
+              });
+
+              const response = await fetch('/predict-raw', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  orders: [orderData]
+                })
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Erreur lors de la prédiction');
+              }
+
+              const result = await response.json();
+              this.prediction = {
+                cluster: result.cluster,
+                segment_name: result.segment_name,
+                segment_action: result.segment_action,
+                confidence: result.confidence
+              };
+
+              // Récupérer les features si disponibles
+              if (result.engineered_features) {
+                this.features = result.engineered_features;
+              }
+
+            } catch (error) {
+              this.error = error.message;
+            } finally {
+              this.loading = false;
+            }
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -12,4 +12,10 @@ env/
 .cursor/
 logs/
 
-# Keep model + reports (do NOT ignore notebooks/)
+# Exclude heavy data files but keep models and reports
+data/
+notebooks/*.ipynb
+notebooks/mlruns/
+notebooks/data/
+
+# Keep model + reports (do NOT ignore notebooks/models/ and notebooks/reports/)
