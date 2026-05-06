@@ -143,10 +143,11 @@ def calculate_clv(df_rfm: pd.DataFrame, dataset_duration_days: int) -> pd.Series
     """
     dataset_duration_years = dataset_duration_days / 365.25
     clv = df_rfm['Monetary'] * (df_rfm['Frequency'] / dataset_duration_years)
-    
-    # Validate that CLV is always positive
-    assert (clv >= 0).all(), "CLV must always be positive"
-    
+
+    # Validate that CLV is always positive (use explicit check instead of assert)
+    if not (clv >= 0).all():
+        raise ValueError("CLV must always be positive — check Monetary and Frequency columns.")
+
     logger.info(f"CLV calculated. Mean: {clv.mean():.2f}, Max: {clv.max():.2f}")
     return clv
 
@@ -262,7 +263,7 @@ class FeatureEngineer:
         numeric_cols = df_client.select_dtypes(include='number').columns
         for col in numeric_cols:
             if df_client[col].isna().any():
-                df_client[col].fillna(df_client[col].median(), inplace=True)
+                df_client[col] = df_client[col].fillna(df_client[col].median())
         
         logger.info(f"Features engineered. Final shape: {df_client.shape}")
         return df_client

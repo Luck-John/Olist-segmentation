@@ -42,20 +42,20 @@ jobs:
     - name: 🎨 Format check with Black
       run: black --check --diff src tests
       continue-on-error: true
-    
+
     - name: 📋 Check import sorting with isort
       run: isort --check-only --diff src tests
       continue-on-error: true
-    
-    - name: 🧹 Lint with flake8 (critical errors)
+
+    - name: 🧹 Lint with flake8 (critical errors only)
       run: |
         flake8 src tests --count --select=E9,F63,F7,F82 --show-source --statistics
-    
-    - name: 🧹 Lint with flake8 (all)
+
+    - name: 🧹 Lint with flake8 (full — informational)
       run: |
         flake8 src tests --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
       continue-on-error: true
-    
+
     - name: 🔎 Lint with pylint
       run: pylint src/ --fail-under=8.0 --exit-zero
       continue-on-error: true
@@ -100,6 +100,8 @@ jobs:
           --cov-fail-under=80 \
           --junitxml=pytest.xml \
           -n auto
+      env:
+        MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI || 'sqlite:///mlflow_ci.db' }}
     
     - name: 📊 Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -128,7 +130,71 @@ jobs:
         MINIMUM_ORANGE: 70
 
   # ============================================================================
-  # 3. BUILD AND PUSH DOCKER IMAGE
+  # 3. MLFLOW TRACKING SERVER — vérifie le serveur et publie l'UI
+  # ============================================================================
+  mlflow-tracking:
+    name: 📊 MLflow Tracking Server
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push'
+
+    steps:
+    - name: ✅ Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: 📦 Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install mlflow>=2.10.0
+
+    - name: 🚀 Start MLflow server
+      run: |
+        mlflow server \
+          --host 0.0.0.0 \
+          --port 5000 \
+          --backend-store-uri sqlite:///mlruns.db \
+          --default-artifact-root ./mlartifacts &
+        # Wait for server to be ready
+        for i in $(seq 1 15); do
+          curl -sf http://localhost:5000/health && break || sleep 2
+        done
+
+    - name: 🧪 Verify MLflow server health
+      run: |
+        STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/health)
+        echo "MLflow server status: $STATUS"
+        [ "$STATUS" = "200" ] && echo "✅ MLflow server is up" || (echo "❌ MLflow server failed" && exit 1)
+
+    - name: 📈 Run a tracking smoke test
+      run: |
+        python - <<'EOF'
+        import mlflow
+        mlflow.set_tracking_uri("http://localhost:5000")
+        mlflow.set_experiment("ci_smoke_test")
+        with mlflow.start_run(run_name="ci_check"):
+            mlflow.log_param("env", "github_actions")
+            mlflow.log_metric("smoke_test_passed", 1.0)
+        print("✅ MLflow tracking smoke test passed")
+        EOF
+
+    - name: 📦 Upload MLflow artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: mlflow-tracking-store
+        path: |
+          mlruns.db
+          mlartifacts/
+        retention-days: 14
+
+  # ============================================================================
+  # 4. BUILD AND PUSH DOCKER IMAGE
   # ============================================================================
   docker-build:
     name: 🐳 Build Docker Image
@@ -178,7 +244,7 @@ jobs:
         cache-to: type=gha,mode=max
 
   # ============================================================================
-  # 4. SECURITY SCANNING
+  # 5. SECURITY SCANNING
   # ============================================================================
   security:
     name: 🔐 Security Scan
@@ -209,12 +275,12 @@ jobs:
       continue-on-error: true
 
   # ============================================================================
-  # 5. DEPLOYMENT STATUS
+  # 6. DEPLOYMENT STATUS
   # ============================================================================
   status:
     name: ✅ Pipeline Status
     runs-on: ubuntu-latest
-    needs: [code-quality, test, docker-build, security]
+    needs: [code-quality, test, mlflow-tracking, docker-build, security]
     if: always()
     
     steps:

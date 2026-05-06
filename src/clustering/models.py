@@ -1,10 +1,14 @@
 """
-Clustering models and evaluation metrics
+Clustering models and evaluation metrics.
+
+This module implements KMeans, DBSCAN and Hierarchical clustering with
+MLflow experiment tracking for every run.
 """
-import pandas as pd
+import mlflow
+import mlflow.sklearn
 import numpy as np
-from typing import Dict, List, Tuple, Optional
-from sklearn.preprocessing import StandardScaler
+from typing import Dict, Tuple, Optional
+from sklearn.preprocessing import StandardScaler  # noqa: F401 — re-exported for convenience
 from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
@@ -115,25 +119,37 @@ class KMeansClustering:
         
         for k in range(k_min, k_max + 1):
             logger.info(f"Fitting KMeans with k={k}")
-            
-            kmeans = KMeans(
-                n_clusters=k,
-                init=self.config['clustering']['kmeans']['init'],
-                n_init=self.config['clustering']['kmeans']['n_init'],
-                max_iter=self.config['clustering']['kmeans']['max_iter'],
-                random_state=self.config['random_state']
-            )
-            
-            labels = kmeans.fit_predict(X)
-            metrics = self.evaluator.calculate_metrics(X, labels)
-            
+
+            with mlflow.start_run(run_name=f"KMeans_k{k}", nested=True):
+                kmeans = KMeans(
+                    n_clusters=k,
+                    init=self.config['clustering']['kmeans']['init'],
+                    n_init=self.config['clustering']['kmeans']['n_init'],
+                    max_iter=self.config['clustering']['kmeans']['max_iter'],
+                    random_state=self.config['random_state'],
+                )
+
+                labels = kmeans.fit_predict(X)
+                metrics = self.evaluator.calculate_metrics(X, labels)
+
+                # --- MLflow tracking ---
+                mlflow.log_param("algorithm", "kmeans")
+                mlflow.log_param("n_clusters", k)
+                mlflow.log_param("init", self.config['clustering']['kmeans']['init'])
+                mlflow.log_param("random_state", self.config['random_state'])
+                for metric_name, metric_value in metrics.items():
+                    if metric_name != 'n_clusters' and not np.isnan(float(metric_value or 0)):
+                        mlflow.log_metric(metric_name, float(metric_value))
+                mlflow.log_metric("inertia", kmeans.inertia_)
+                mlflow.sklearn.log_model(kmeans, artifact_path=f"kmeans_k{k}")
+
             self.models[k] = {
                 'model': kmeans,
                 'labels': labels,
                 'metrics': metrics,
-                'inertia': kmeans.inertia_
+                'inertia': kmeans.inertia_,
             }
-            
+
             results[k] = metrics
             logger.info(f"k={k}: silhouette={metrics.get('silhouette_score', np.nan):.3f}")
         
@@ -219,32 +235,44 @@ class DBSCANClustering:
         
         for eps in eps_values:
             logger.info(f"Fitting DBSCAN with eps={eps:.2f}")
-            
-            dbscan = DBSCAN(
-                eps=eps,
-                min_samples=self.config['clustering']['dbscan']['min_samples']
-            )
-            
-            labels = dbscan.fit_predict(X)
-            
-            # Only calculate metrics if clustering is valid
-            if self.evaluator.is_valid_clustering(labels):
-                metrics = self.evaluator.calculate_metrics(X, labels)
-            else:
-                metrics = {
-                    'n_clusters': len(np.unique(labels)) - (1 if -1 in labels else 0),
-                    'noise_points': np.sum(labels == -1),
-                    'silhouette_score': np.nan,
-                    'davies_bouldin_score': np.nan,
-                    'calinski_harabasz_score': np.nan
-                }
-            
+
+            with mlflow.start_run(run_name=f"DBSCAN_eps{eps:.2f}", nested=True):
+                dbscan = DBSCAN(
+                    eps=eps,
+                    min_samples=self.config['clustering']['dbscan']['min_samples'],
+                )
+
+                labels = dbscan.fit_predict(X)
+
+                # Only calculate metrics if clustering is valid
+                if self.evaluator.is_valid_clustering(labels):
+                    metrics = self.evaluator.calculate_metrics(X, labels)
+                else:
+                    metrics = {
+                        'n_clusters': len(np.unique(labels)) - (1 if -1 in labels else 0),
+                        'noise_points': int(np.sum(labels == -1)),
+                        'silhouette_score': np.nan,
+                        'davies_bouldin_score': np.nan,
+                        'calinski_harabasz_score': np.nan,
+                    }
+
+                # --- MLflow tracking ---
+                mlflow.log_param("algorithm", "dbscan")
+                mlflow.log_param("eps", round(float(eps), 4))
+                mlflow.log_param("min_samples", self.config['clustering']['dbscan']['min_samples'])
+                mlflow.log_metric("n_clusters", metrics['n_clusters'])
+                mlflow.log_metric("noise_points", metrics['noise_points'])
+                for metric_name in ('silhouette_score', 'davies_bouldin_score', 'calinski_harabasz_score'):
+                    value = metrics.get(metric_name)
+                    if value is not None and not np.isnan(float(value)):
+                        mlflow.log_metric(metric_name, float(value))
+
             self.models[eps] = {
                 'model': dbscan,
                 'labels': labels,
-                'metrics': metrics
+                'metrics': metrics,
             }
-            
+
             results[eps] = metrics
         
         return results
@@ -275,22 +303,32 @@ class HierarchicalClustering:
         
         for linkage in linkages:
             logger.info(f"Fitting Hierarchical with linkage={linkage}")
-            
-            hc = AgglomerativeClustering(
-                n_clusters=n_clusters,
-                linkage=linkage,
-                metric=self.config['clustering']['hierarchical']['distance_metric']
-            )
-            
-            labels = hc.fit_predict(X)
-            metrics = self.evaluator.calculate_metrics(X, labels)
-            
+
+            with mlflow.start_run(run_name=f"Hierarchical_{linkage}_k{n_clusters}", nested=True):
+                hc = AgglomerativeClustering(
+                    n_clusters=n_clusters,
+                    linkage=linkage,
+                    metric=self.config['clustering']['hierarchical']['distance_metric'],
+                )
+
+                labels = hc.fit_predict(X)
+                metrics = self.evaluator.calculate_metrics(X, labels)
+
+                # --- MLflow tracking ---
+                mlflow.log_param("algorithm", "hierarchical")
+                mlflow.log_param("linkage", linkage)
+                mlflow.log_param("n_clusters", n_clusters)
+                mlflow.log_param("distance_metric", self.config['clustering']['hierarchical']['distance_metric'])
+                for metric_name, metric_value in metrics.items():
+                    if metric_name != 'n_clusters' and not np.isnan(float(metric_value or 0)):
+                        mlflow.log_metric(metric_name, float(metric_value))
+
             self.models[linkage] = {
                 'model': hc,
                 'labels': labels,
-                'metrics': metrics
+                'metrics': metrics,
             }
-            
+
             results[linkage] = metrics
             logger.info(f"Linkage={linkage}: silhouette={metrics.get('silhouette_score', np.nan):.3f}")
         
@@ -344,15 +382,13 @@ class PCAReducer:
 
 
 if __name__ == "__main__":
-    # Test the clustering
-    from sklearn.preprocessing import StandardScaler
-    
-    # Create dummy data
+    # Quick smoke test — StandardScaler already imported at module level
     X = np.random.randn(100, 10)
     X_scaled = StandardScaler().fit_transform(X)
-    
-    # Test KMeans
-    kmeans_clustering = KMeansClustering()
-    results = kmeans_clustering.fit_range(X_scaled, k_range=(2, 5))
-    best_k, best_model = kmeans_clustering.get_best_model()
-    print(f"Best KMeans: k={best_k}")
+
+    mlflow.set_experiment("olist_clustering_smoke_test")
+    with mlflow.start_run(run_name="smoke_test"):
+        kmeans_clustering = KMeansClustering()
+        results = kmeans_clustering.fit_range(X_scaled, k_range=(2, 5))
+        best_k, best_model = kmeans_clustering.get_best_model()
+        print(f"Best KMeans: k={best_k}")

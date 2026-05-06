@@ -4,7 +4,7 @@ Data loading and preprocessing module
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 from scipy.stats import mstats
 
 from src.utils.config import load_config, get_logger
@@ -89,7 +89,7 @@ def handle_missing_values(df: pd.DataFrame, strategy: str = 'report') -> pd.Data
         return df
 
 
-def remove_duplicates(df: pd.DataFrame, subset: list = None) -> pd.DataFrame:
+def remove_duplicates(df: pd.DataFrame, subset: Optional[list] = None) -> pd.DataFrame:
     """
     Remove duplicate rows.
     
