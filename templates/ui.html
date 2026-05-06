@@ -33,6 +33,26 @@
 
           <form class="mt-4 flex flex-col gap-4" method="post" action="/ui/predict">
             <div>
+              <label class="text-sm font-medium text-slate-200" for="raw_csv">Orders (CSV)</label>
+              <textarea
+                id="raw_csv"
+                name="raw_csv"
+                rows="10"
+                class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950/60 p-3 font-mono text-xs text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                placeholder="order_id,customer_unique_id,order_status,order_purchase_timestamp,payment_value,order_delivered_customer_date,order_estimated_delivery_date,review_score,review_creation_date,customer_lat,customer_lng&#10;o1,c123,delivered,2018-01-01T10:00:00,120,2018-01-05T10:00:00,2018-01-06T10:00:00,5,2018-01-06T10:00:00,-23.55,-46.63"
+              >{{ raw_csv or "" }}</textarea>
+              <p class="mt-2 text-xs text-slate-400">
+                Tu peux coller plusieurs lignes (plusieurs commandes) du même client.
+              </p>
+            </div>
+
+            <div class="flex items-center gap-3 text-xs text-slate-500">
+              <div class="h-px flex-1 bg-slate-800"></div>
+              <div>ou</div>
+              <div class="h-px flex-1 bg-slate-800"></div>
+            </div>
+
+            <div>
               <label class="text-sm font-medium text-slate-200" for="raw_json">Orders (JSON)</label>
               <textarea
                 id="raw_json"

@@ -13,6 +13,7 @@ import json
 import pickle
 from pathlib import Path
 from typing import List, Dict, Optional
+from io import StringIO
 
 import pandas as pd
 import numpy as np
@@ -388,13 +389,14 @@ def ui_home(request: Request):
             "features": None,
             "error": None,
             "raw_json": None,
+            "raw_csv": None,
             "base_url": str(request.base_url).rstrip("/"),
         },
     )
 
 
 @app.post("/ui/predict", response_class=HTMLResponse)
-def ui_predict(request: Request, raw_json: str = Form(...)):
+def ui_predict(request: Request, raw_json: str = Form(""), raw_csv: str = Form("")):
     if not segmentation_api:
         return templates.TemplateResponse(
             "ui.html",
@@ -404,15 +406,25 @@ def ui_predict(request: Request, raw_json: str = Form(...)):
                 "features": None,
                 "error": "API not initialized (503).",
                 "raw_json": raw_json,
+                "raw_csv": raw_csv,
                 "base_url": str(request.base_url).rstrip("/"),
             },
             status_code=503,
         )
 
     try:
-        orders = json.loads(raw_json)
-        if not isinstance(orders, list):
-            raise ValueError("JSON must be a list of orders (array).")
+        raw_json = (raw_json or "").strip()
+        raw_csv = (raw_csv or "").strip()
+
+        if raw_csv:
+            df = pd.read_csv(StringIO(raw_csv))
+            orders = df.to_dict(orient="records")
+        else:
+            if not raw_json:
+                raise ValueError("Provide either CSV or JSON input.")
+            orders = json.loads(raw_json)
+            if not isinstance(orders, list):
+                raise ValueError("JSON must be a list of orders (array).")
 
         result = segmentation_api.predict_from_raw_orders(orders)
         prediction = {
@@ -433,6 +445,7 @@ def ui_predict(request: Request, raw_json: str = Form(...)):
                 "features": result.get("engineered_features"),
                 "error": None,
                 "raw_json": raw_json,
+                "raw_csv": raw_csv,
                 "base_url": str(request.base_url).rstrip("/"),
             },
         )
@@ -445,6 +458,7 @@ def ui_predict(request: Request, raw_json: str = Form(...)):
                 "features": None,
                 "error": str(e),
                 "raw_json": raw_json,
+                "raw_csv": raw_csv,
                 "base_url": str(request.base_url).rstrip("/"),
             },
             status_code=400,
