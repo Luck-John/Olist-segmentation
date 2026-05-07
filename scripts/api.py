@@ -397,25 +397,21 @@ app.add_middleware(
 # API ENDPOINTS
 # ============================================================================
 
-@app.get("/")
-def root(request: Request):
-    """
-    Page d'accueil de l'API (JSON). Ce n'est pas une erreur : le navigateur affiche ce résumé.
-    Pour saisir des données brutes et laisser le pipeline calculer les features puis le segment, ouvrir /form.
-    """
+
+def _root_json(request: Request) -> Dict:
+    """Métadonnées API pour clients JSON (curl, intégrations)."""
     base = str(request.base_url).rstrip("/")
     return {
         "name": "Customer Segmentation API",
         "status": "ok",
         "message": (
-            "L'API est joignable. Ce JSON est normal sur la racine /. "
-            "Ouvrez /form dans le navigateur pour le formulaire (données brutes → features → segment), "
-            "ou /docs pour tester les endpoints."
+            "Réponse technique JSON pour la racine. Dans un navigateur, ouvrez /form ou /docs "
+            "(ou rajoutez ?format=json si vous voyez encore ce JSON après redirection désactivée)."
         ),
         "workflow": {
-            "step_1": "L'utilisateur envoie des lignes commande brutes (JSON) ou remplit le formulaire /form",
-            "step_2": "Le serveur calcule les features (RFM, livraison, avis, CLV, etc.) comme dans le pipeline",
-            "step_3": "Le modèle KMeans assigne le segment client",
+            "step_1": "Données brutes (formulaire /form ou POST /predict-raw)",
+            "step_2": "Calcul des features côté serveur",
+            "step_3": "Segment KMeans",
             "endpoint": "POST /predict-raw",
         },
         "links": {
@@ -436,8 +432,22 @@ def root(request: Request):
             "ui": "/ui",
             "simple": "/simple",
             "app_redirect": "/app",
+            "discovery_json_always": f"{base}/?format=json",
         },
     }
+
+
+@app.get("/")
+def root(request: Request):
+    """
+    Les navigateurs envoient `Accept: text/html` → redirection vers le formulaire /form.
+    Clients API (curl, JSON) gardent une réponse JSON ; forcez avec `/?format=json`.
+    """
+    accept = (request.headers.get("accept") or "").lower()
+    force_json = request.query_params.get("format") == "json"
+    if not force_json and "text/html" in accept:
+        return RedirectResponse(url="/form", status_code=307)
+    return _root_json(request)
 
 
 @app.get("/app")
