@@ -26,8 +26,9 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import uvicorn
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# Import / chemins relatifs robustes quel que soit le cwd (Railway, systemd, etc.)
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.features.engineering import FeatureEngineer
 from src.utils.config import Config, get_logger
@@ -338,8 +339,8 @@ _api_init_task: Optional[asyncio.Task] = None
 
 def _build_segmentation_api() -> SegmentationAPI:
     return SegmentationAPI(
-        model_dir="notebooks/models",
-        reports_dir="notebooks/reports",
+        model_dir=str(PROJECT_ROOT / "notebooks" / "models"),
+        reports_dir=str(PROJECT_ROOT / "notebooks" / "reports"),
     )
 
 
@@ -381,7 +382,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=str(PROJECT_ROOT / "templates"))
 
 # Add CORS middleware
 app.add_middleware(
