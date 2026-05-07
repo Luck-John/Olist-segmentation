@@ -23,6 +23,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import uvicorn
 
@@ -439,6 +440,13 @@ app = FastAPI(
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 logger.info(f"Templates directory: {TEMPLATES_DIR} (exists={TEMPLATES_DIR.exists()})")
 
+# Mount static files
+static_dir = PROJECT_ROOT / "src"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+    logger.info(f"Static files mounted at /static from {static_dir}")
+else:
+    logger.warning(f"Static directory not found: {static_dir}")
 
 # Add CORS middleware
 app.add_middleware(

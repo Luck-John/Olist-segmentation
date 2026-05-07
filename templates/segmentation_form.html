@@ -521,7 +521,7 @@
                 </svg>
             </div>
             <div class="header-text">
-                <img src="src/images/olist.png" alt="Olist" style="height: 40px; width: auto; display: block; margin-bottom: 0.5rem;">
+                <img src="/static/src/images/olist.png" alt="Olist" style="height: 40px; width: auto; display: block; margin-bottom: 0.5rem;">
                 <h1>Segmentation Clients Olist</h1>
                 <p>Analysez et catégorisez les clients en fonction de leurs comportements d'achat</p>
             </div>
@@ -572,11 +572,9 @@
                                     <label>Date et Heure d'Achat *</label>
                                     <div class="datetime-group">
                                         <div class="form-group">
-                                            <label style="font-size: 0.85rem;">Date</label>
                                             <input type="date" name="order_purchase_date" required>
                                         </div>
                                         <div class="form-group">
-                                            <label style="font-size: 0.85rem;">Heure</label>
                                             <input type="time" name="order_purchase_time" required>
                                         </div>
                                     </div>
@@ -593,15 +591,24 @@
                                     <label>Catégorie Produit *</label>
                                     <select name="super_categorie" required>
                                         <option value="">-- Sélectionner --</option>
-                                        <option value="electronics">Electronique</option>
-                                        <option value="home">Maison</option>
-                                        <option value="health_beauty">Sante et Beaute</option>
-                                        <option value="sports">Sports</option>
-                                        <option value="furniture">Mobilier</option>
-                                        <option value="fashion">Mode</option>
-                                        <option value="books">Livres</option>
-                                        <option value="toys">Jouets</option>
-                                        <option value="garden">Jardin</option>
+                                        <!-- HOME & FURNITURE -->
+                                        <option value="home">🏠 Maison & Mobilier</option>
+                                        <!-- APPLIANCES -->
+                                        <option value="appliances">⚡ Appareils Ménagers</option>
+                                        <!-- CONSTRUCTION & DIY -->
+                                        <option value="construction">🔧 Construction & Bricolage</option>
+                                        <!-- OFFICE & B2B -->
+                                        <option value="office">🏢 Bureau & B2B</option>
+                                        <!-- ELECTRONICS & TECH -->
+                                        <option value="electronics">💻 Électronique & Tech</option>
+                                        <!-- FASHION & ACCESSORIES -->
+                                        <option value="fashion">👗 Mode & Accessoires</option>
+                                        <!-- HEALTH, BEAUTY & BABY -->
+                                        <option value="health_beauty">💊 Santé & Beauté</option>
+                                        <!-- AUTRES -->
+                                        <option value="sports_leisure">⚽ Sports & Loisirs</option>
+                                        <option value="arts">🎨 Arts & Culture</option>
+                                        <option value="other">📦 Autres</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -622,11 +629,9 @@
                                     <label>Date et Heure d'Approbation</label>
                                     <div class="datetime-group">
                                         <div class="form-group">
-                                            <label style="font-size: 0.85rem;">Date</label>
                                             <input type="date" name="order_approved_date">
                                         </div>
                                         <div class="form-group">
-                                            <label style="font-size: 0.85rem;">Heure</label>
                                             <input type="time" name="order_approved_time">
                                         </div>
                                     </div>
