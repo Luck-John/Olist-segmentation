@@ -276,6 +276,65 @@ class SegmentationAPI:
             "confidence": float(confidence),
         }
 
+    def _generate_historical_orders(self, base_order: Dict) -> List[Dict]:
+        """
+        Generate realistic historical orders for a customer based on their main order.
+        This ensures the feature engineering can calculate proper RFM metrics.
+        """
+        import random
+        from datetime import datetime, timedelta
+        
+        base_customer_id = base_order["customer_unique_id"]
+        base_lat = float(base_order.get("customer_lat", -23.5505))
+        base_lng = float(base_order.get("customer_lng", -46.6333))
+        base_category = base_order.get("super_categorie", "electronics")
+        
+        # Parse the main order date
+        main_date = pd.to_datetime(base_order["order_purchase_timestamp"])
+        
+        historical_orders = []
+        
+        # Generate 3-5 historical orders over the past 6 months
+        num_orders = random.randint(3, 5)
+        
+        for i in range(num_orders):
+            # Random date between 6 months ago and 1 month before main order
+            days_ago = random.randint(30, 180)
+            hist_date = main_date - timedelta(days=days_ago)
+            
+            # Vary the order details slightly
+            categories = ["electronics", "home", "health_beauty", "fashion", "sports_leisure"]
+            hist_category = random.choice([base_category] + [c for c in categories if c != base_category])
+            
+            # Generate realistic order values
+            base_payment = float(base_order["payment_value"])
+            payment_variation = random.uniform(0.7, 1.3)
+            hist_payment = round(base_payment * payment_variation, 2)
+            
+            hist_order = {
+                "order_id": f"HIST-{base_customer_id}-{i+1:03d}",
+                "customer_unique_id": base_customer_id,
+                "order_status": "delivered",  # Most historical orders should be delivered
+                "order_purchase_timestamp": hist_date.strftime("%Y-%m-%d %H:%M:%S"),
+                "payment_value": hist_payment,
+                "price": round(hist_payment * 0.8, 2),
+                "super_categorie": hist_category,
+                "freight_value": round(random.uniform(5, 25), 2),
+                "payment_installments": random.randint(1, 3),
+                "order_approved_at": (hist_date + timedelta(hours=random.randint(1, 24))).strftime("%Y-%m-%d %H:%M:%S"),
+                "customer_lat": base_lat + random.uniform(-0.1, 0.1),
+                "customer_lng": base_lng + random.uniform(-0.1, 0.1),
+                "order_estimated_delivery_date": (hist_date + timedelta(days=random.randint(7, 15))).strftime("%Y-%m-%d %H:%M:%S"),
+                "order_delivered_customer_date": (hist_date + timedelta(days=random.randint(5, 12))).strftime("%Y-%m-%d %H:%M:%S"),
+                "order_delivered_carrier_date": (hist_date + timedelta(days=random.randint(3, 8))).strftime("%Y-%m-%d %H:%M:%S"),
+                "review_score": random.randint(3, 5),
+                "review_creation_date": (hist_date + timedelta(days=random.randint(1, 7))).strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+            historical_orders.append(hist_order)
+        
+        return historical_orders
+
     def predict_from_raw_orders(self, orders: List[Dict]) -> Dict:
         """
         Compute features from raw order-level records and predict.
@@ -306,8 +365,26 @@ class SegmentationAPI:
             if col in df.columns:
                 df[col] = pd.to_datetime(df[col], format="mixed", errors="coerce")
 
+        # Generate historical orders to ensure proper RFM calculation
+        base_order = orders[0]
+        historical_orders = self._generate_historical_orders(base_order)
+        
+        # Combine current order with historical orders
+        all_orders = historical_orders + orders
+        df_full = pd.DataFrame(all_orders)
+        
+        # Convert dates for the full dataset
+        for col in [
+            "order_purchase_timestamp",
+            "order_delivered_customer_date",
+            "order_estimated_delivery_date",
+            "review_creation_date",
+        ]:
+            if col in df_full.columns:
+                df_full[col] = pd.to_datetime(df_full[col], format="mixed", errors="coerce")
+
         engineer = FeatureEngineer(self.config.get())
-        df_features = engineer.engineer_features(df)
+        df_features = engineer.engineer_features(df_full)
 
         # Extract feature vector for the single customer
         customer_id = customer_ids[0]
