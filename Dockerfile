@@ -18,6 +18,7 @@ COPY src/ ./src/
 COPY scripts/ ./scripts/
 COPY config/ ./config/
 COPY templates/ ./templates/
+COPY static/ ./static/
 COPY project.py setup.cfg ./
 
 # Seulement ce que l’API charge (évite ~15 .pkl + PNG inutiles → build Railway plus fiable)
