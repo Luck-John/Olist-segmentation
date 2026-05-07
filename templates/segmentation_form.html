@@ -60,6 +60,17 @@
             opacity: 0.95;
         }
 
+        .header-text {
+            flex: 1;
+        }
+
+        .header-text img {
+            height: 40px;
+            width: auto;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
         /* Form container */
         .form-container {
             background: white;
@@ -386,9 +397,12 @@
         /* Tabs */
         .tabs {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
             margin-bottom: 1.5rem;
             border-bottom: 2px solid #e0e8f0;
+            padding-bottom: 0;
         }
 
         .tab {
@@ -401,6 +415,11 @@
             border-bottom: 3px solid transparent;
             transition: all 0.3s ease;
             margin-bottom: -2px;
+            border-radius: 6px 6px 0 0;
+            white-space: nowrap;
+            font-size: 0.9rem;
+            text-align: center;
+            min-width: fit-content;
         }
 
         .tab.active {
@@ -414,6 +433,10 @@
 
         .tab-content.active {
             display: block;
+        }
+
+        .datetime-group .form-group input {
+            width: 100%;
         }
 
         /* Responsive */
@@ -498,7 +521,8 @@
                 </svg>
             </div>
             <div class="header-text">
-                <h1>🎯 Segmentation Clients Olist</h1>
+                <img src="src/images/olist.png" alt="Olist" style="height: 40px; width: auto; display: block; margin-bottom: 0.5rem;">
+                <h1>Segmentation Clients Olist</h1>
                 <p>Analysez et catégorisez les clients en fonction de leurs comportements d'achat</p>
             </div>
         </div>
@@ -513,10 +537,10 @@
             <div class="form-content">
                 <!-- Tabs -->
                 <div class="tabs">
-                    <button class="tab active" onclick="switchTab('order')">📦 Informations Commande</button>
-                    <button class="tab" onclick="switchTab('customer')">📍 Localisation Client</button>
-                    <button class="tab" onclick="switchTab('delivery')">🚚 Livraison & Paiement</button>
-                    <button class="tab" onclick="switchTab('review')">⭐ Évaluation</button>
+                    <button class="tab active" type="button" onclick="switchTab('order', this)">Informations Commande</button>
+                    <button class="tab" type="button" onclick="switchTab('customer', this)">Localisation Client</button>
+                    <button class="tab" type="button" onclick="switchTab('delivery', this)">Livraison et Paiement</button>
+                    <button class="tab" type="button" onclick="switchTab('review', this)">Evaluation</button>
                 </div>
 
                 <form id="predictionForm">
@@ -537,22 +561,22 @@
                                     <label>Statut Commande *</label>
                                     <select name="order_status" required>
                                         <option value="">-- Sélectionner --</option>
-                                        <option value="delivered">✓ Livrée</option>
-                                        <option value="shipped">📦 Expédiée</option>
-                                        <option value="processing">⏳ En cours</option>
-                                        <option value="canceled">✗ Annulée</option>
-                                        <option value="unavailable">🚫 Indisponible</option>
+                                        <option value="delivered">Livree</option>
+                                        <option value="shipped">Expediee</option>
+                                        <option value="processing">En cours</option>
+                                        <option value="canceled">Annulee</option>
+                                        <option value="unavailable">Indisponible</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label>Date et Heure d'Achat *</label>
                                     <div class="datetime-group">
                                         <div class="form-group">
-                                            <label style="font-size: 0.85rem;">📅 Date</label>
+                                            <label style="font-size: 0.85rem;">Date</label>
                                             <input type="date" name="order_purchase_date" required>
                                         </div>
                                         <div class="form-group">
-                                            <label style="font-size: 0.85rem;">🕐 Heure</label>
+                                            <label style="font-size: 0.85rem;">Heure</label>
                                             <input type="time" name="order_purchase_time" required>
                                         </div>
                                     </div>
@@ -569,15 +593,15 @@
                                     <label>Catégorie Produit *</label>
                                     <select name="super_categorie" required>
                                         <option value="">-- Sélectionner --</option>
-                                        <option value="electronics">📱 Électronique</option>
-                                        <option value="home">🏠 Maison</option>
-                                        <option value="health_beauty">💄 Santé & Beauté</option>
-                                        <option value="sports">⚽ Sports</option>
-                                        <option value="furniture">🪑 Mobilier</option>
-                                        <option value="fashion">👗 Mode</option>
-                                        <option value="books">📚 Livres</option>
-                                        <option value="toys">🧸 Jouets</option>
-                                        <option value="garden">🌱 Jardin</option>
+                                        <option value="electronics">Electronique</option>
+                                        <option value="home">Maison</option>
+                                        <option value="health_beauty">Sante et Beaute</option>
+                                        <option value="sports">Sports</option>
+                                        <option value="furniture">Mobilier</option>
+                                        <option value="fashion">Mode</option>
+                                        <option value="books">Livres</option>
+                                        <option value="toys">Jouets</option>
+                                        <option value="garden">Jardin</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -598,11 +622,11 @@
                                     <label>Date et Heure d'Approbation</label>
                                     <div class="datetime-group">
                                         <div class="form-group">
-                                            <label style="font-size: 0.85rem;">📅 Date</label>
+                                            <label style="font-size: 0.85rem;">Date</label>
                                             <input type="date" name="order_approved_date">
                                         </div>
                                         <div class="form-group">
-                                            <label style="font-size: 0.85rem;">🕐 Heure</label>
+                                            <label style="font-size: 0.85rem;">Heure</label>
                                             <input type="time" name="order_approved_time">
                                         </div>
                                     </div>
@@ -680,8 +704,8 @@
                     <!-- Button Group -->
                     <div class="button-group">
                         <button type="reset" class="btn-secondary">Réinitialiser</button>
-                        <button type="button" class="btn-secondary" onclick="loadExample()" style="background-color: #f0f4f8; color: #0066cc; border: 2px solid #0066cc;">📋 Charger Exemple</button>
-                        <button type="submit" class="btn-primary">🚀 Prédire le Segment</button>
+                        <button type="button" class="btn-secondary" onclick="loadExample()" style="background-color: #f0f4f8; color: #0066cc; border: 2px solid #0066cc;">Charger Exemple</button>
+                        <button type="submit" class="btn-primary">Predire le Segment</button>
                     </div>
                 </form>
 
@@ -732,26 +756,11 @@
 
     <script>
         // Tab switching
-        function switchTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-
-            // Show selected tab
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
-        }
-
-        // Tab switching  
-        function switchTab(tabName) {
+        function switchTab(tabName, btn) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
+            if (btn) btn.classList.add('active');
         }
 
         // Form submission
@@ -783,7 +792,7 @@
                 const result = await response.json();
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('resultSection').classList.add('show');
-                document.getElementById('successMessage').textContent = '✓ Prédiction réussie!';
+                document.getElementById('successMessage').textContent = 'Prediction reussie.';
                 document.getElementById('resultCustomerId').textContent = result.customer_id || '-';
                 document.getElementById('resultCluster').textContent = result.cluster;
                 document.getElementById('resultSegment').textContent = result.segment_name;
@@ -821,7 +830,7 @@
 
             } catch (error) {
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('errorMessage').textContent = '❌ Erreur: ' + error.message;
+                document.getElementById('errorMessage').textContent = 'Erreur: ' + error.message;
                 document.getElementById('errorMessage').classList.add('show');
             }
         });
