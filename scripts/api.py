@@ -30,8 +30,26 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # Import / chemins relatifs robustes quel que soit le cwd (Railway, systemd, etc.)
 sys.path.insert(0, str(PROJECT_ROOT))
 
+# Resolve templates directory robustly
+TEMPLATES_DIR = PROJECT_ROOT / "templates"
+if not TEMPLATES_DIR.exists():
+    # Fallback: look relative to cwd
+    TEMPLATES_DIR = Path("templates")
+
 from src.features.engineering import FeatureEngineer
 from src.utils.config import Config, get_logger
+
+
+def _fallback_html(title: str, message: str, status: int = 500) -> HTMLResponse:
+    """Simple HTML fallback when templates are unavailable."""
+    html = f"""<!doctype html><html lang='fr'><head><meta charset='utf-8'>
+    <title>{title}</title>
+    <style>body{{font-family:system-ui,sans-serif;background:#0f1419;color:#e2e8f0;padding:2rem;max-width:600px;margin:auto}}
+    h1{{color:#818cf8}}pre{{background:#1e293b;padding:1rem;border-radius:.5rem;overflow:auto;font-size:.85rem}}
+    a{{color:#818cf8}} .ok{{color:#34d399}} .err{{color:#f87171}}</style></head>
+    <body><h1>{title}</h1><p>{message}</p>
+    <p><a href='/docs'>📖 API Docs</a> · <a href='/health'>❤ Health</a> · <a href='/form'>📋 Form</a></p></body></html>"""
+    return HTMLResponse(content=html, status_code=status)
 
 logger = get_logger(__name__)
 
@@ -382,7 +400,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-templates = Jinja2Templates(directory=str(PROJECT_ROOT / "templates"))
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+logger.info(f"Templates directory: {TEMPLATES_DIR} (exists={TEMPLATES_DIR.exists()})")
+
 
 # Add CORS middleware
 app.add_middleware(
@@ -483,22 +503,34 @@ def ui_home(request: Request):
 @app.get("/form", response_class=HTMLResponse)
 def ui_form(request: Request):
     """Form-based UI for easier customer data input"""
-    return templates.TemplateResponse(
-        "ui_form.html",
-        {"request": request},
-    )
+    try:
+        return templates.TemplateResponse(
+            "ui_form.html",
+            {"request": request},
+        )
+    except Exception as e:
+        logger.error(f"Error rendering /form template: {e}")
+        return _fallback_html(
+            "Formulaire de saisie",
+            f"Erreur de rendu du template : <code>{e}</code><br>"
+            f"Templates dir: <code>{TEMPLATES_DIR}</code> (exists={TEMPLATES_DIR.exists()})",
+        )
 
 
 @app.get("/simple", response_class=HTMLResponse)
 def ui_simple(request: Request):
     """Simple form-based UI for customer data input"""
-    return templates.TemplateResponse(
-        "ui_simple.html",
-        {
-            "request": request,
-            "base_url": str(request.base_url).rstrip("/"),
-        },
-    )
+    try:
+        return templates.TemplateResponse(
+            "ui_simple.html",
+            {
+                "request": request,
+                "base_url": str(request.base_url).rstrip("/"),
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error rendering /simple template: {e}")
+        return _fallback_html("Interface simple", f"Erreur: <code>{e}</code>")
 
 
 @app.post("/ui/predict", response_class=HTMLResponse)
