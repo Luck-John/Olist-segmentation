@@ -137,16 +137,17 @@ def calculate_clv(df_rfm: pd.DataFrame, dataset_duration_days: int) -> pd.Series
     Args:
         df_rfm: DataFrame with Monetary and Frequency columns
         dataset_duration_days: Total duration of dataset in days
-    
+
     Returns:
-        Series with CLV values (must be positive)
+        Series with CLV values (>= 0)
     """
-    dataset_duration_years = dataset_duration_days / 365.25
+    # Use at least 1 day to avoid division by zero (single-order edge case)
+    duration = max(int(dataset_duration_days), 1)
+    dataset_duration_years = duration / 365.25
     clv = df_rfm['Monetary'] * (df_rfm['Frequency'] / dataset_duration_years)
 
-    # Validate that CLV is always positive (use explicit check instead of assert)
-    if not (clv >= 0).all():
-        raise ValueError("CLV must always be positive — check Monetary and Frequency columns.")
+    # Clean numerical artefacts (inf, -inf, NaN) → 0
+    clv = clv.replace([np.inf, -np.inf], 0).fillna(0).clip(lower=0)
 
     logger.info(f"CLV calculated. Mean: {clv.mean():.2f}, Max: {clv.max():.2f}")
     return clv

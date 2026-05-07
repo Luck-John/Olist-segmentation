@@ -1,0 +1,29 @@
+Feature_Name,Type,Category,Formula_or_Description,Notebook_Usage,Engineering_py_Usage,Included_in_FEATURES_FINAL,Status
+customer_unique_id,Categorical,Raw,Unique customer identifier,Aggregation key,Aggregation key,❌,✅ Identical
+order_id,Categorical,Raw,Unique order identifier,Order aggregation,Order aggregation,❌,✅ Identical
+order_purchase_timestamp,DateTime,Raw,Order purchase timestamp,Recency calculation & snapshot date,Recency calculation & snapshot date,❌,✅ Identical
+payment_value,Numeric,Raw,Payment amount per item,Monetary aggregation,Monetary aggregation,❌,✅ Identical
+payment_installments,Numeric,Raw,Number of installments,avg_installments aggregation,avg_installments aggregation,❌,✅ Identical
+review_score,Numeric,Raw,Customer review score (1-5),avg_review_score aggregation,avg_review_score aggregation,❌,✅ Identical
+Recency,Numeric,RFM,"Days since last order (date_snapshot - max_order_date)",RFM base + transformations,RFM base,❌,"✅ Identical (but underutilized in prod)"
+Frequency,Numeric,RFM,Number of orders per customer,RFM base - EXCLUDED (96.9% = 1),RFM base,❌,"⚠️ Quasi-constant - excluded from clustering"
+Monetary,Numeric,RFM,Total payment value per customer,RFM base + log transform,RFM base,❌,"✅ Intermediate, transformed in notebook"
+avg_delivery_days,Numeric,Delivery,"Mean delivery time (order_delivered_customer_date - order_purchase_timestamp)",Log transformed,Produced as-is,❌,"✅ Base feature, transformed in notebook"
+late_delivery_rate,Numeric,Delivery,"Mean(order_delivered > order_estimated)",Used in composites,Produced as-is,❌,"✅ Base feature"
+avg_review_score,Numeric,Satisfaction,Mean review score per customer,Used as review_raw,Produced as avg_review_score_full,❌,"✅ Same meaning, different names"
+avg_installments,Numeric,Payment,Mean installment count per customer,Bucketed into installment_level,Produced as-is,❌,"✅ Base feature, transformed in notebook"
+CLV_estimate,Numeric,Derived,"Monetary * Frequency / (Recency+1)",Supplementary (non-clustering),Different formula (Monetary * Frequency / dataset_years),❌,"⚠️ Different calculation"
+customer_tenure,Numeric,Derived,"(max_date - min_date).days",Not in FEATURES_FINAL,Not produced,❌,"⚠️ Feature gap"
+log_recency,Numeric,Transformation,log1p(Recency),✅ FEATURE 1 in clustering,❌ Missing,✅,🔴 CRITICAL DIVERGENCE
+recency_score_10,Numeric,Transformation,"10 - qcut(Recency, q=10)",✅ FEATURE 2 in clustering,❌ Missing,✅,🔴 CRITICAL DIVERGENCE
+log_monetary,Numeric,Transformation,log1p(Monetary),✅ FEATURE 3 in clustering,❌ Missing,✅,🔴 CRITICAL DIVERGENCE
+log_item_price,Numeric,Transformation,log1p(avg_item_price),✅ FEATURE 4 in clustering,❌ Missing,✅,🔴 CRITICAL DIVERGENCE
+installment_level,Numeric,Transformation,"cut(avg_installments, bins=[-0.1,1,3,6,100])",✅ FEATURE 5 in clustering,❌ Missing,✅,🔴 CRITICAL DIVERGENCE
+review_raw,Numeric,Transformation,clip(avg_review_score 1 5),✅ FEATURE 6 in clustering,❌ Missing,✅,🔴 CRITICAL DIVERGENCE
+log_delivery,Numeric,Transformation,log1p(avg_delivery_days),✅ FEATURE 7 in clustering,❌ Missing,✅,🔴 CRITICAL DIVERGENCE
+satisfaction_composite,Numeric,Composite,"(review/5 - late_rate - 0.3*norm_delay).clip(-1 1)",Supplementary visualization,❌ Missing,❌,🔴 Missing (not required but used for profiles)
+freight_ratio,Numeric,Composite,"(avg_freight / Monetary).clip(0 1)",Supplementary visualization,❌ Missing,❌,🔴 Missing (not required but used for profiles)
+dist_sao_paulo,Numeric,Geographic,"Haversine distance (lat lng) to São Paulo",❌ Not in FEATURES_FINAL,✅ dist_sao_paulo produced,❌,"⚠️ Extra in prod (not used for clustering)"
+X_scaled_standardized,Numeric,Preprocessing,StandardScaler on 7 features,✅ Applied,❌ Missing,N/A,🔴 CRITICAL MISSING
+X_pca,Numeric,Preprocessing,PCA(n_components=5 whiten=True),✅ Applied,❌ Missing,N/A,🔴 CRITICAL MISSING
+cluster_labels,Numeric,Output,KMeans cluster assignment (0-K_FINAL),✅ Produced (K=4-8),❌ Missing,N/A,🔴 CRITICAL MISSING

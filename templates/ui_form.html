@@ -213,6 +213,43 @@
         </div>
 
         <div class="section">
+          <div class="section-title">Paiement</div>
+          <div class="fields">
+            <div>
+              <label>Nombre de versements <span class="opt">(optionnel)</span></label>
+              <input id="payment_installments" type="number" min="1" step="1" placeholder="1"/>
+              <div class="hint">Nombre d'échéances de paiement (1 = paiement comptant)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Produits</div>
+          <div class="fields">
+            <div>
+              <label>Prix unitaire (R$) <span class="opt">(optionnel)</span></label>
+              <input id="price" type="number" step="0.01" min="0" placeholder="50.99"/>
+              <div class="hint">Prix moyen des articles commandés</div>
+            </div>
+            <div>
+              <label>Nombre d'articles <span class="opt">(optionnel)</span></label>
+              <input id="order_item_id" type="number" step="1" min="1" placeholder="1"/>
+              <div class="hint">Nombre total d'articles/SKUs dans la commande</div>
+            </div>
+            <div>
+              <label>Catégorie produit <span class="opt">(optionnel)</span></label>
+              <input id="super_categorie" type="text" placeholder="ex. Electronics, Furniture"/>
+              <div class="hint">Catégorie principale du produit</div>
+            </div>
+            <div>
+              <label>Frais de port (R$) <span class="opt">(optionnel)</span></label>
+              <input id="freight_value" type="number" step="0.01" min="0" placeholder="15.50"/>
+              <div class="hint">Coût d'expédition/logistique</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
           <div class="section-title">Avis client</div>
           <div class="fields">
             <div>

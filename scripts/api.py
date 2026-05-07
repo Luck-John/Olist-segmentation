@@ -82,8 +82,23 @@ class RawOrder(BaseModel):
     # Optional-but-recommended fields for feature engineering
     order_delivered_customer_date: Optional[str] = None
     order_estimated_delivery_date: Optional[str] = None
+    order_approved_at: Optional[str] = None
+    order_delivered_carrier_date: Optional[str] = None
+    
+    # Payment details
+    payment_installments: Optional[float] = None
+    
+    # Product details
+    price: Optional[float] = None
+    order_item_id: Optional[float] = None
+    super_categorie: Optional[str] = None
+    freight_value: Optional[float] = None
+    
+    # Review details
     review_score: Optional[float] = None
     review_creation_date: Optional[str] = None
+    
+    # Location details
     customer_lat: Optional[float] = None
     customer_lng: Optional[float] = None
 
