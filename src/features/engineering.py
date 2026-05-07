@@ -344,13 +344,20 @@ class FeatureEngineer:
     
     def engineer_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Main pipeline to engineer all features.
+        Main pipeline to engineer ONLY the 5 active features needed for clustering.
+        
+        Features calculated:
+        1. Recency
+        2. avg_review_score_full
+        3. avg_delivery_days
+        4. avg_installments
+        5. CLV_estimate
         
         Args:
             df: Preprocessed DataFrame
         
         Returns:
-            DataFrame with engineered features
+            DataFrame with 5 engineered features
         """
         df = self._ensure_raw_columns(df)
         
@@ -358,92 +365,74 @@ class FeatureEngineer:
         snapshot_date = df['order_purchase_timestamp'].max() + pd.Timedelta(days=1)
         dataset_duration = (df['order_purchase_timestamp'].max() - df['order_purchase_timestamp'].min()).days
         if dataset_duration <= 0:
-            # Avoid division by zero in CLV for single-order / short windows
             dataset_duration = 1
         
         logger.info(f"Snapshot date: {snapshot_date.date()}")
         logger.info(f"Dataset duration: {dataset_duration} days")
         
-        # Start with RFM (delivered orders only)
+        # === FEATURE 1 & 2: RFM (Recency, Frequency, Monetary) ===
         df_client = calculate_rfm(df, snapshot_date)
         if df_client.empty:
             raise ValueError(
-                "Impossible de calculer le RFM : aucune commande avec order_status='delivered'. "
-                "Ajoutez au moins une commande livrée (même synthétique) pour la prédiction."
+                "Cannot calculate RFM: no orders with order_status='delivered'. "
+                "Add at least one delivered order for prediction."
             )
         
-        # Add delivery metrics
+        # === FEATURE 3: avg_delivery_days ===
         avg_del, late_rate, avg_delta = calculate_delivery_metrics(df)
         df_client['avg_delivery_days'] = df_client['customer_unique_id'].map(avg_del)
-        df_client['late_delivery_rate'] = df_client['customer_unique_id'].map(late_rate)
-        df_client['avg_delivery_delta'] = df_client['customer_unique_id'].map(avg_delta)
         
-        # Add review metrics
+        # === FEATURE 2: avg_review_score_full ===
         avg_rev_full, has_rev_full, avg_rev_avail, has_rev_avail = calculate_review_metrics(
             df, snapshot_date, latency_days=self.config['data']['snapshot_lag_days']
         )
         df_client['avg_review_score_full'] = df_client['customer_unique_id'].map(avg_rev_full)
-        df_client['has_full_review'] = df_client['customer_unique_id'].map(has_rev_full)
-        df_client['avg_review_score_available'] = df_client['customer_unique_id'].map(avg_rev_avail)
-        df_client['has_available_review'] = df_client['customer_unique_id'].map(has_rev_avail)
         
-        # Add CLV
-        df_client['CLV'] = calculate_clv(df_client[['Monetary', 'Frequency']], dataset_duration)
+        # === FEATURE 5: CLV_estimate ===
+        clv = calculate_clv(df_client[['Monetary', 'Frequency']], dataset_duration)
+        df_client['CLV_estimate'] = clv
         
-        # Add geographic metrics
-        sao_paulo = tuple(self.config['feature_engineering']['sao_paulo_coords'])
-        dist = calculate_geographic_metrics(df, sao_paulo)
-        df_client['dist_sao_paulo'] = df_client['customer_unique_id'].map(dist)
-        
-        # Add payment metrics
+        # === FEATURE 4: avg_installments ===
         avg_inst, avg_freight = calculate_payment_metrics(df)
         df_client['avg_installments'] = df_client['customer_unique_id'].map(avg_inst)
-        df_client['avg_freight_ratio'] = df_client['customer_unique_id'].map(avg_freight)
         
-        # Add temporal features
-        most_hour, most_day = calculate_temporal_features(df)
-        df_client['most_frequent_purchase_hour'] = df_client['customer_unique_id'].map(most_hour)
-        df_client['most_frequent_purchase_day'] = df_client['customer_unique_id'].map(most_day)
+        # === SELECT ONLY 5 FEATURES ===
+        FEATURES_ACTIVE = [
+            'customer_unique_id',
+            'Recency',
+            'avg_review_score_full',
+            'avg_delivery_days',
+            'avg_installments',
+            'CLV_estimate'
+        ]
         
-        # Add category spend
-        spend_dict = calculate_category_spend(df, ['health_beauty', 'home'])
-        for cat_name, cat_series in spend_dict.items():
-            df_client[cat_name] = df_client['customer_unique_id'].map(cat_series)
+        # Check all required features are present
+        missing = [f for f in FEATURES_ACTIVE if f not in df_client.columns]
+        if missing:
+            raise ValueError(f"Missing features: {missing}")
         
-        # Add basket size
-        basket = calculate_basket_size(df)
-        df_client['avg_basket_size'] = df_client['customer_unique_id'].map(basket)
+        # Select only active features
+        df_client = df_client[FEATURES_ACTIVE]
         
-        # Fill NaN values
+        # === FILL NaN VALUES ===
         numeric_cols = df_client.select_dtypes(include='number').columns
         for col in numeric_cols:
             if df_client[col].isna().any():
-                df_client[col] = df_client[col].fillna(df_client[col].median())
-
-        # If some columns are still NaN (e.g., all-NaN medians on small samples),
-        # apply safe fallbacks to keep features usable for prediction.
-        if "avg_review_score_available" in df_client.columns and df_client["avg_review_score_available"].isna().any():
-            df_client["avg_review_score_available"] = df_client["avg_review_score_available"].fillna(
-                df_client.get("avg_review_score_full", 0)
-            )
-        if "has_available_review" in df_client.columns and df_client["has_available_review"].isna().any():
-            df_client["has_available_review"] = df_client["has_available_review"].fillna(
-                df_client.get("has_full_review", 0)
-            )
-        if "dist_sao_paulo" in df_client.columns and df_client["dist_sao_paulo"].isna().any():
-            df_client["dist_sao_paulo"] = df_client["dist_sao_paulo"].fillna(0)
-        if "avg_installments" in df_client.columns and df_client["avg_installments"].isna().any():
-            df_client["avg_installments"] = df_client["avg_installments"].fillna(1)
-        if "avg_freight_ratio" in df_client.columns and df_client["avg_freight_ratio"].isna().any():
-            df_client["avg_freight_ratio"] = df_client["avg_freight_ratio"].fillna(0)
-        if "most_frequent_purchase_hour" in df_client.columns and df_client["most_frequent_purchase_hour"].isna().any():
-            df_client["most_frequent_purchase_hour"] = df_client["most_frequent_purchase_hour"].fillna(12)
-        if "most_frequent_purchase_day" in df_client.columns and df_client["most_frequent_purchase_day"].isna().any():
-            df_client["most_frequent_purchase_day"] = df_client["most_frequent_purchase_day"].fillna(3)
-        if "avg_basket_size" in df_client.columns and df_client["avg_basket_size"].isna().any():
-            df_client["avg_basket_size"] = df_client["avg_basket_size"].fillna(0)
+                median_val = df_client[col].median()
+                if pd.isna(median_val):
+                    # If median is NaN, use a default value
+                    default_vals = {
+                        'Recency': 365,
+                        'avg_review_score_full': 3.0,
+                        'avg_delivery_days': 7,
+                        'avg_installments': 1,
+                        'CLV_estimate': 0
+                    }
+                    median_val = default_vals.get(col, 0)
+                df_client[col] = df_client[col].fillna(median_val)
         
-        logger.info(f"Features engineered. Final shape: {df_client.shape}")
+        logger.info(f"Features engineered. Shape: {df_client.shape}")
+        logger.info(f"Features: {list(df_client.columns)}")
         return df_client
 
 

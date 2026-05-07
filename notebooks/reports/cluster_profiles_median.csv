@@ -1,5 +1,6 @@
-cluster,Recency,Monetary,avg_review_score_available,avg_delivery_days,avg_installments,avg_freight_ratio,dist_sao_paulo,avg_basket_size,late_delivery_rate
-0,272.0,171.68,4.0,9.0,2.0,0.22,350.27,2.0,0.0
-1,238.0,108.42,2.0,29.0,2.0,0.19,381.94,1.0,1.0
-2,272.0,96.95,5.0,9.0,1.0,0.19,353.48,1.0,0.0
-3,250.0,299.85,5.0,10.0,4.0,0.08,393.22,1.0,0.0
+cluster,Recency,avg_review_score_full,avg_delivery_days,avg_installments,CLV_estimate
+0,287.0,3.0,12.0,4.0,71.93343264248705
+1,283.0,5.0,10.0,1.0,37.66995466321244
+2,93.0,5.0,4.0,1.0,31.81743847150259
+3,276.0,3.0,13.0,1.0,39.29276230569948
+4,305.0,5.0,10.0,4.0,73.8448445595855

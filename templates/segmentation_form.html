@@ -572,11 +572,14 @@
                                     <label>Statut Commande *</label>
                                     <select name="order_status" required>
                                         <option value="">-- Sélectionner --</option>
-                                        <option value="delivered">Livree</option>
-                                        <option value="shipped">Expediee</option>
+                                        <option value="delivered">Livré</option>
+                                        <option value="shipped">Expédié</option>
                                         <option value="processing">En cours</option>
-                                        <option value="canceled">Annulee</option>
+                                        <option value="canceled">Annulé</option>
                                         <option value="unavailable">Indisponible</option>
+                                        <option value="invoiced">Facturé</option>
+                                        <option value="processing">En préparation</option>
+                                        <option value="approved">Approuvé</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -885,26 +888,17 @@
                 document.getElementById('confidencePercent').textContent = confidence + '%';
                 document.getElementById('confidenceFill').style.width = confidence + '%';
 
-                // Display engineered features (all 14)
+                // Display 5 engineered features for clustering
                 const featuresDisplay = document.getElementById('featuresDisplay');
                 if (result.engineered_features && featuresDisplay) {
                     const features = result.engineered_features;
                     const featureLine = `
-                        <strong>14 Features Calculées:</strong>
-                        Recency: ${features.Recency?.toFixed(2) || '-'} | 
-                        Monetary: ${features.Monetary?.toFixed(2) || '-'} | 
-                        avg_installments: ${features.avg_installments?.toFixed(2) || '-'} | 
-                        avg_review_score_available: ${features.avg_review_score_available?.toFixed(2) || '-'} | 
-                        late_delivery_rate: ${features.late_delivery_rate?.toFixed(4) || '-'} | 
-                        avg_delivery_days: ${features.avg_delivery_days?.toFixed(2) || '-'} | 
-                        avg_delivery_delta: ${features.avg_delivery_delta?.toFixed(2) || '-'} | 
-                        avg_freight_ratio: ${features.avg_freight_ratio?.toFixed(4) || '-'} | 
-                        avg_basket_size: ${features.avg_basket_size?.toFixed(2) || '-'} | 
-                        dist_sao_paulo: ${features.dist_sao_paulo?.toFixed(4) || '-'} | 
-                        most_frequent_purchase_hour: ${features.most_frequent_purchase_hour?.toFixed(0) || '-'} | 
-                        most_frequent_purchase_day: ${features.most_frequent_purchase_day?.toFixed(0) || '-'} | 
-                        spend_health_beauty: ${features["spend_('price', 'health_beauty')"]?.toFixed(2) || '-'} | 
-                        spend_home: ${features["spend_('price', 'home')"]?.toFixed(2) || '-'}
+                        <strong>5 Features Modele Clustering:</strong><br/>
+                        Recency (jours): <strong>${features.Recency?.toFixed(0) || '-'}</strong> | 
+                        Review Score: <strong>${features.avg_review_score_full?.toFixed(2) || '-'}/5.0</strong> | 
+                        Livraison (jours): <strong>${features.avg_delivery_days?.toFixed(1) || '-'}</strong> | 
+                        Versements: <strong>${features.avg_installments?.toFixed(1) || '-'}</strong> | 
+                        CLV (BRL): <strong>${features.CLV_estimate?.toFixed(0) || '-'}</strong>
                     `;
                     featuresDisplay.innerHTML = featureLine;
                 }
@@ -918,42 +912,104 @@
             }
         });
 
-        // Example data - multiple orders for realistic customer behavior
+        // Multiple example scenarios for different customer segments
         function loadExample() {
-            const exampleData = {
-                // Order Information (main order shown in form)
-                order_id: 'ORDER-2024-001',
-                customer_unique_id: 'CUST-12345',
-                order_status: 'delivered',
-                order_purchase_date: '2024-03-15',
-                order_purchase_time: '14:30',
-                payment_value: '250.50',
-                price: '200.00',
-                super_categorie: 'electronics',
-                freight_value: '15.00',
-                
-                // Payment Details
-                payment_installments: '2',
-                order_approved_date: '2024-03-15',
-                order_approved_time: '14:35',
-                
-                // Customer Location
-                customer_lat: '-23.5505',
-                customer_lng: '-46.6333',
-                
-                // Delivery Information
-                order_estimated_delivery_date: '2024-03-20',
-                order_estimated_delivery_time: '23:59',
-                order_delivered_customer_date: '2024-03-18',
-                order_delivered_customer_time: '10:00',
-                order_delivered_carrier_date: '2024-03-17',
-                order_delivered_carrier_time: '08:00',
-                
-                // Review Information
-                review_score: '5',
-                review_creation_date: '2024-03-22',
-                review_creation_time: '15:30'
-            };
+            const examples = [
+                {
+                    name: "Client Premium",
+                    data: {
+                        order_id: 'ORDER-2024-001',
+                        customer_unique_id: 'CUST-PREMIUM',
+                        order_status: 'delivered',
+                        order_purchase_date: '2024-01-15',
+                        order_purchase_time: '14:30',
+                        payment_value: '850.50',
+                        price: '750.00',
+                        super_categorie: 'electronics',
+                        freight_value: '25.00',
+                        payment_installments: '8',
+                        order_approved_date: '2024-01-15',
+                        order_approved_time: '14:35',
+                        customer_lat: '-23.5505',
+                        customer_lng: '-46.6333',
+                        order_estimated_delivery_date: '2024-01-20',
+                        order_estimated_delivery_time: '23:59',
+                        order_delivered_customer_date: '2024-01-18',
+                        order_delivered_customer_time: '10:00',
+                        order_delivered_carrier_date: '2024-01-17',
+                        order_delivered_carrier_time: '08:00',
+                        review_score: '5',
+                        review_creation_date: '2024-01-22',
+                        review_creation_time: '15:30'
+                    }
+                },
+                {
+                    name: "Client Déçu",
+                    data: {
+                        order_id: 'ORDER-2024-002',
+                        customer_unique_id: 'CUST-UNHAPPY',
+                        order_status: 'delivered',
+                        order_purchase_date: '2023-12-01',
+                        order_purchase_time: '09:15',
+                        payment_value: '45.99',
+                        price: '35.00',
+                        super_categorie: 'other',
+                        freight_value: '10.99',
+                        payment_installments: '1',
+                        order_approved_date: '2023-12-01',
+                        order_approved_time: '09:30',
+                        customer_lat: '-23.5505',
+                        customer_lng: '-46.6333',
+                        order_estimated_delivery_date: '2023-12-10',
+                        order_estimated_delivery_time: '23:59',
+                        order_delivered_customer_date: '2023-12-15',
+                        order_delivered_customer_time: '16:00',
+                        order_delivered_carrier_date: '2023-12-08',
+                        order_delivered_carrier_time: '14:00',
+                        review_score: '1',
+                        review_creation_date: '2023-12-20',
+                        review_creation_time: '11:00'
+                    }
+                },
+                {
+                    name: "Client Dormant",
+                    data: {
+                        order_id: 'ORDER-2024-003',
+                        customer_unique_id: 'CUST-DORMANT',
+                        order_status: 'delivered',
+                        order_purchase_date: '2023-06-15',
+                        order_purchase_time: '20:45',
+                        payment_value: '120.00',
+                        price: '100.00',
+                        super_categorie: 'home',
+                        freight_value: '20.00',
+                        payment_installments: '3',
+                        order_approved_date: '2023-06-15',
+                        order_approved_time: '21:00',
+                        customer_lat: '-23.5505',
+                        customer_lng: '-46.6333',
+                        order_estimated_delivery_date: '2023-06-25',
+                        order_estimated_delivery_time: '23:59',
+                        order_delivered_customer_date: '2023-06-30',
+                        order_delivered_customer_time: '14:00',
+                        order_delivered_carrier_date: '2023-06-22',
+                        order_delivered_carrier_time: '10:00',
+                        review_score: '3',
+                        review_creation_date: '2023-07-05',
+                        review_creation_time: '09:00'
+                    }
+                }
+            ];
+            
+            // Rotate through examples
+            const currentExample = examples[Math.floor(Math.random() * examples.length)];
+            const exampleData = currentExample.data;
+            
+            // Update button text to show which example is loaded
+            const loadButton = document.querySelector('button[onclick="loadExample()"]');
+            if (loadButton) {
+                loadButton.textContent = `Charger: ${currentExample.name}`;
+            }
 
             Object.entries(exampleData).forEach(([key, value]) => {
                 const input = document.querySelector(`[name="${key}"]`);

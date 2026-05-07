@@ -240,15 +240,15 @@ class SegmentationAPI:
         logger.info(f"Step 3 OK: X_pca shape={X_pca_full.shape}, dtype={X_pca_full.dtype}")
         X_pca_full = np.asarray(X_pca_full, dtype=np.float32)
         
-        # Predict cluster with float32 input to match model
+        # Predict cluster with PCA-transformed input to match model training
         logger.info(f"Step 4: Predicting with model")
         model = self.pipeline['model']
         model_dtype = model.cluster_centers_.dtype
-        logger.info(f"Model centers dtype: {model_dtype}, X_scaled dtype: {X_scaled.dtype}")
+        logger.info(f"Model centers dtype: {model_dtype}, X_pca shape: {X_pca_full.shape}")
         
         # Ensure both are the same dtype
-        X_for_predict = X_scaled.astype(model_dtype, copy=False)
-        logger.info(f"Step 4: Calling predict with dtype={X_for_predict.dtype}")
+        X_for_predict = X_pca_full.astype(model_dtype, copy=False)
+        logger.info(f"Step 4: Calling predict with dtype={X_for_predict.dtype}, shape={X_for_predict.shape}")
         
         cluster = model.predict(X_for_predict)[0]
         logger.info(f"Step 4 OK: Predicted cluster {cluster}")
@@ -263,9 +263,29 @@ class SegmentationAPI:
         # Get 2D PCA for visualization
         X_pca_2d = X_pca_full[:, :2]
         
-        # Calculate distance to cluster center for confidence
-        distances = np.linalg.norm(model.cluster_centers_[cluster] - X_for_predict[0])
+        # Calculate distances to all cluster centers first
+        all_distances = []
+        for i, center in enumerate(model.cluster_centers_):
+            dist = np.linalg.norm(center - X_for_predict[0])
+            all_distances.append(dist)
+        
+        # Find the closest cluster
+        closest_cluster = np.argmin(all_distances)
+        distances = all_distances[closest_cluster]
+        
+        # Calculate confidence based on distance
         confidence = 1.0 / (1.0 + distances)
+        
+        # Debug: Log cluster centers and distances
+        logger.info(f"Cluster centers shape: {model.cluster_centers_.shape}")
+        logger.info(f"Feature vector: {X_for_predict[0]}")
+        logger.info(f"All distances: {all_distances}")
+        logger.info(f"Closest cluster: {closest_cluster}")
+        logger.info(f"Distance to cluster {closest_cluster}: {distances}")
+        logger.info(f"Confidence: {confidence}")
+        
+        # Use the closest cluster instead of model.predict()
+        cluster = closest_cluster
         
         return {
             "cluster": int(cluster),
@@ -367,11 +387,24 @@ class SegmentationAPI:
 
         # Generate historical orders to ensure proper RFM calculation
         base_order = orders[0]
+        
+        # Debug: Log base order before generating historical orders
+        logger.info(f"Base order: {base_order}")
+        logger.info(f"Payment value from base order: {base_order.get('payment_value')}")
+        logger.info(f"Order date from base order: {base_order.get('order_purchase_timestamp')}")
+        logger.info(f"Review score from base order: {base_order.get('review_score')}")
+
         historical_orders = self._generate_historical_orders(base_order)
+        logger.info(f"Generated {len(historical_orders)} historical orders")
         
         # Combine current order with historical orders
         all_orders = historical_orders + orders
         df_full = pd.DataFrame(all_orders)
+        
+        # Debug: Check order statuses and payment values
+        logger.info(f"All orders statuses: {df_full['order_status'].value_counts().to_dict()}")
+        logger.info(f"All payment values: {df_full['payment_value'].tolist()}")
+        logger.info(f"All order dates: {df_full['order_purchase_timestamp'].tolist()}")
         
         # Convert dates for the full dataset
         for col in [
@@ -385,6 +418,20 @@ class SegmentationAPI:
 
         engineer = FeatureEngineer(self.config.get())
         df_features = engineer.engineer_features(df_full)
+        
+        # Debug: Log RFM features specifically
+        logger.info(f"Generated {len(historical_orders)} historical orders")
+        logger.info(f"Total orders for RFM: {len(df_full)}")
+        logger.info(f"Features engineered shape: {df_features.shape}")
+        
+        if not df_features.empty:
+            customer_row = df_features.iloc[0]
+            rfm_features = {
+                'Recency': customer_row.get('Recency', 'N/A'),
+                'Frequency': customer_row.get('Frequency', 'N/A'), 
+                'Monetary': customer_row.get('Monetary', 'N/A')
+            }
+            logger.info(f"RFM features for customer: {rfm_features}")
 
         # Extract feature vector for the single customer
         customer_id = customer_ids[0]
@@ -404,7 +451,12 @@ class SegmentationAPI:
                 )
             features[col] = val
 
+        # Debug: Log the engineered features
+        logger.info(f"Engineered features for customer {customer_id}: {features}")
+        
         result = self.predict_segment(features)
+        logger.info(f"Prediction result: {result}")
+        
         result["customer_id"] = customer_id
         result["engineered_features"] = features
         return result
@@ -731,6 +783,215 @@ def health_check():
         "api_loading": loading,
         "model_loaded": segmentation_api.pipeline is not None if segmentation_api else False,
     }
+
+@app.get("/test-prediction")
+def test_prediction():
+    """Test endpoint to debug prediction issues"""
+    if not segmentation_api:
+        return {"error": "API not initialized"}
+    
+    try:
+        # Create test data with different scenarios
+        test_scenarios = [
+            {
+                "name": "Premium Customer",
+                "orders": [{
+                    "order_id": "TEST-PREMIUM-001",
+                    "customer_unique_id": "CUST-PREMIUM-TEST",
+                    "order_status": "delivered",
+                    "order_purchase_timestamp": "2024-01-15 14:30:00",
+                    "payment_value": 850.50,
+                    "price": 750.00,
+                    "super_categorie": "electronics",
+                    "freight_value": 25.00,
+                    "payment_installments": 8,
+                    "order_approved_at": "2024-01-15 14:35:00",
+                    "customer_lat": -23.5505,
+                    "customer_lng": -46.6333,
+                    "order_estimated_delivery_date": "2024-01-20 23:59:59",
+                    "order_delivered_customer_date": "2024-01-18 10:00:00",
+                    "order_delivered_carrier_date": "2024-01-17 08:00:00",
+                    "review_score": 5,
+                    "review_creation_date": "2024-01-22 15:30:00"
+                }]
+            },
+            {
+                "name": "Unhappy Customer", 
+                "orders": [{
+                    "order_id": "TEST-UNHAPPY-001",
+                    "customer_unique_id": "CUST-UNHAPPY-TEST",
+                    "order_status": "delivered",
+                    "order_purchase_timestamp": "2023-12-01 09:15:00",
+                    "payment_value": 45.99,
+                    "price": 35.00,
+                    "super_categorie": "other",
+                    "freight_value": 10.99,
+                    "payment_installments": 1,
+                    "order_approved_at": "2023-12-01 09:30:00",
+                    "customer_lat": -23.5505,
+                    "customer_lng": -46.6333,
+                    "order_estimated_delivery_date": "2023-12-10 23:59:59",
+                    "order_delivered_customer_date": "2023-12-15 16:00:00",
+                    "order_delivered_carrier_date": "2023-12-08 14:00:00",
+                    "review_score": 1,
+                    "review_creation_date": "2023-12-20 11:00:00"
+                }]
+            }
+        ]
+        
+        results = []
+        for scenario in test_scenarios:
+            logger.info(f"Testing scenario: {scenario['name']}")
+            result = segmentation_api.predict_from_raw_orders(scenario["orders"])
+            results.append({
+                "scenario": scenario["name"],
+                "customer_id": result["customer_id"],
+                "cluster": result["cluster"],
+                "segment": result["segment_name"],
+                "confidence": result["confidence"],
+                "features": result["engineered_features"]
+            })
+        
+        return {"test_results": results}
+        
+    except Exception as e:
+        logger.error(f"Test prediction failed: {str(e)}")
+        return {"error": str(e)}
+
+@app.get("/test-simple")
+def test_simple():
+    """Simple test to check if API works at all"""
+    if not segmentation_api:
+        return {"error": "API not initialized"}
+    
+    try:
+        logger.info("=== SIMPLE TEST START ===")
+        
+        # Test with minimal data
+        test_order = {
+            "order_id": "SIMPLE-TEST",
+            "customer_unique_id": "CUST-SIMPLE",
+            "order_status": "delivered",
+            "order_purchase_timestamp": "2024-01-01 12:00:00",
+            "payment_value": 100.00,
+            "price": 90.00,
+            "super_categorie": "electronics",
+            "freight_value": 10.00,
+            "payment_installments": 2,
+            "review_score": 3
+        }
+        
+        logger.info(f"Test order: {test_order}")
+        result = segmentation_api.predict_from_raw_orders([test_order])
+        logger.info(f"Simple test result: {result}")
+        
+        return {
+            "status": "success",
+            "cluster": result["cluster"],
+            "segment": result["segment_name"],
+            "confidence": result["confidence"],
+            "message": "Simple test completed successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Simple test failed: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return {"error": str(e), "traceback": traceback.format_exc()}
+
+@app.get("/debug-features")
+def debug_features():
+    """Debug endpoint to analyze feature calculation"""
+    if not segmentation_api:
+        return {"error": "API not initialized"}
+    
+    try:
+        logger.info("=== DEBUG FEATURES START ===")
+        
+        # Test with two different scenarios
+        scenarios = [
+            {
+                "name": "Premium Customer",
+                "order": {
+                    "order_id": "DEBUG-PREMIUM",
+                    "customer_unique_id": "CUST-PREMIUM",
+                    "order_status": "delivered",
+                    "order_purchase_timestamp": "2024-01-15 14:30:00",
+                    "payment_value": 850.50,
+                    "price": 750.00,
+                    "super_categorie": "electronics",
+                    "freight_value": 25.00,
+                    "payment_installments": 8,
+                    "order_approved_at": "2024-01-15 14:35:00",
+                    "customer_lat": -23.5505,
+                    "customer_lng": -46.6333,
+                    "order_estimated_delivery_date": "2024-01-20 23:59:59",
+                    "order_delivered_customer_date": "2024-01-18 10:00:00",
+                    "order_delivered_carrier_date": "2024-01-17 08:00:00",
+                    "review_score": 5,
+                    "review_creation_date": "2024-01-22 15:30:00"
+                }
+            },
+            {
+                "name": "Low Value Customer",
+                "order": {
+                    "order_id": "DEBUG-LOW",
+                    "customer_unique_id": "CUST-LOW",
+                    "order_status": "delivered",
+                    "order_purchase_timestamp": "2023-12-01 09:15:00",
+                    "payment_value": 45.99,
+                    "price": 35.00,
+                    "super_categorie": "other",
+                    "freight_value": 10.99,
+                    "payment_installments": 1,
+                    "order_approved_at": "2023-12-01 09:30:00",
+                    "customer_lat": -23.5505,
+                    "customer_lng": -46.6333,
+                    "order_estimated_delivery_date": "2023-12-10 23:59:59",
+                    "order_delivered_customer_date": "2023-12-15 16:00:00",
+                    "order_delivered_carrier_date": "2023-12-08 14:00:00",
+                    "review_score": 1,
+                    "review_creation_date": "2023-12-20 11:00:00"
+                }
+            }
+        ]
+        
+        results = []
+        for scenario in scenarios:
+            logger.info(f"Testing scenario: {scenario['name']}")
+            result = segmentation_api.predict_from_raw_orders([scenario["order"]])
+            
+            # Extract key RFM features for comparison
+            features = result.get("engineered_features", {})
+            key_features = {
+                "Recency": features.get("Recency", "N/A"),
+                "Monetary": features.get("Monetary", "N/A"),
+                "Frequency": features.get("Frequency", "N/A"),
+                "avg_installments": features.get("avg_installments", "N/A"),
+                "avg_review_score_available": features.get("avg_review_score_available", "N/A")
+            }
+            
+            results.append({
+                "scenario": scenario["name"],
+                "input_payment": scenario["order"]["payment_value"],
+                "input_review": scenario["order"]["review_score"],
+                "cluster": result["cluster"],
+                "segment": result["segment_name"],
+                "confidence": result["confidence"],
+                "key_features": key_features
+            })
+        
+        return {
+            "status": "success",
+            "comparison": results,
+            "message": "Feature comparison completed"
+        }
+        
+    except Exception as e:
+        logger.error(f"Debug features failed: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return {"error": str(e), "traceback": traceback.format_exc()}
 
 
 @app.post("/predict", response_model=SegmentationResponse)
