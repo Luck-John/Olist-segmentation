@@ -432,6 +432,7 @@ def _root_json(request: Request) -> Dict:
             "ui": "/ui",
             "simple": "/simple",
             "app_redirect": "/app",
+            "forms_typo_redirect": f"{base}/forms",
             "discovery_json_always": f"{base}/?format=json",
         },
     }
@@ -456,6 +457,12 @@ def app_entry():
     return RedirectResponse(url="/form", status_code=307)
 
 
+@app.get("/forms")
+def typo_forms_plural():
+    """Beaucoup tentent /forms — redirige vers /form."""
+    return RedirectResponse(url="/form", status_code=307)
+
+
 @app.get("/ui", response_class=HTMLResponse)
 def ui_home(request: Request):
     return templates.TemplateResponse(
@@ -477,10 +484,7 @@ def ui_form(request: Request):
     """Form-based UI for easier customer data input"""
     return templates.TemplateResponse(
         "ui_form.html",
-        {
-            "request": request,
-            "base_url": str(request.base_url).rstrip("/"),
-        },
+        {"request": request},
     )
 
 

@@ -54,8 +54,10 @@ def main():
         "scripts.api:app",
         "--host", host,
         "--port", port,
+        "--proxy-headers",
+        "--forwarded-allow-ips=*",
         "--reload",
-        "--log-level", "info"
+        "--log-level", "info",
     ]
     
     subprocess.run(cmd)

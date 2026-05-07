@@ -256,7 +256,8 @@
     </div>
 
     <script>
-      const API_BASE = {{ base_url | tojson }};
+      /** Même origine que la page → pas besoin du host Railway (proxy / X-Forwarded). */
+      const API_BASE = "";
 
       function customerForm() {
         return {

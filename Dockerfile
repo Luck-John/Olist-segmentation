@@ -36,4 +36,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
   CMD sh -c "curl -fsS http://127.0.0.1:$${PORT:-8000}/health || exit 1"
 
-CMD ["sh", "-c", "python -m uvicorn scripts.api:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info"]
+CMD ["sh", "-c", "python -m uvicorn scripts.api:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips='*' --log-level info"]
