@@ -441,7 +441,7 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 logger.info(f"Templates directory: {TEMPLATES_DIR} (exists={TEMPLATES_DIR.exists()})")
 
 # Mount static files
-static_dir = PROJECT_ROOT / "src"
+static_dir = PROJECT_ROOT / "static"
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
     logger.info(f"Static files mounted at /static from {static_dir}")

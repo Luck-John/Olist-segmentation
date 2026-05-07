@@ -35,6 +35,7 @@
             display: flex;
             align-items: center;
             gap: 1.5rem;
+            justify-content: space-between;
         }
 
         .olist-logo {
@@ -62,6 +63,7 @@
 
         .header-text {
             flex: 1;
+            text-align: left;
         }
 
         .header-text img {
@@ -69,6 +71,13 @@
             width: auto;
             display: block;
             margin-bottom: 0.5rem;
+            order: 2;
+        }
+
+        .header-logo {
+            order: 3;
+            display: flex;
+            align-items: center;
         }
 
         /* Form container */
@@ -521,9 +530,11 @@
                 </svg>
             </div>
             <div class="header-text">
-                <img src="/static/src/images/olist.png" alt="Olist" style="height: 40px; width: auto; display: block; margin-bottom: 0.5rem;">
                 <h1>Segmentation Clients Olist</h1>
                 <p>Analysez et catégorisez les clients en fonction de leurs comportements d'achat</p>
+            </div>
+            <div class="header-logo">
+                <img src="/static/olist.png" alt="Olist" style="height: 40px; width: auto;">
             </div>
         </div>
 
@@ -551,11 +562,11 @@
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label>ID Commande *</label>
-                                    <input type="text" name="order_id" placeholder="ex: abc123" required>
+                                    <input type="text" name="order_id" required>
                                 </div>
                                 <div class="form-group">
                                     <label>ID Client Unique *</label>
-                                    <input type="text" name="customer_unique_id" placeholder="ex: cust456" required>
+                                    <input type="text" name="customer_unique_id" required>
                                 </div>
                                 <div class="form-group">
                                     <label>Statut Commande *</label>
@@ -581,39 +592,39 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Montant de Paiement (BRL) *</label>
-                                    <input type="number" name="payment_value" step="0.01" placeholder="150.50" required>
+                                    <input type="number" name="payment_value" step="0.01" required>
                                 </div>
                                 <div class="form-group">
                                     <label>Prix Produit (BRL)</label>
-                                    <input type="number" name="price" step="0.01" placeholder="100.00">
+                                    <input type="number" name="price" step="0.01">
                                 </div>
                                 <div class="form-group">
                                     <label>Catégorie Produit *</label>
                                     <select name="super_categorie" required>
                                         <option value="">-- Sélectionner --</option>
                                         <!-- HOME & FURNITURE -->
-                                        <option value="home">🏠 Maison & Mobilier</option>
+                                        <option value="home">Maison & Mobilier</option>
                                         <!-- APPLIANCES -->
-                                        <option value="appliances">⚡ Appareils Ménagers</option>
+                                        <option value="appliances">Appareils Ménagers</option>
                                         <!-- CONSTRUCTION & DIY -->
-                                        <option value="construction">🔧 Construction & Bricolage</option>
+                                        <option value="construction">Construction & Bricolage</option>
                                         <!-- OFFICE & B2B -->
-                                        <option value="office">🏢 Bureau & B2B</option>
+                                        <option value="office">Bureau & B2B</option>
                                         <!-- ELECTRONICS & TECH -->
-                                        <option value="electronics">💻 Électronique & Tech</option>
+                                        <option value="electronics">Électronique & Tech</option>
                                         <!-- FASHION & ACCESSORIES -->
-                                        <option value="fashion">👗 Mode & Accessoires</option>
+                                        <option value="fashion">Mode & Accessoires</option>
                                         <!-- HEALTH, BEAUTY & BABY -->
-                                        <option value="health_beauty">💊 Santé & Beauté</option>
+                                        <option value="health_beauty">Santé & Beauté</option>
                                         <!-- AUTRES -->
-                                        <option value="sports_leisure">⚽ Sports & Loisirs</option>
-                                        <option value="arts">🎨 Arts & Culture</option>
-                                        <option value="other">📦 Autres</option>
+                                        <option value="sports_leisure">Sports & Loisirs</option>
+                                        <option value="arts">Arts & Culture</option>
+                                        <option value="other">Autres</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label>Frais de Port (BRL)</label>
-                                    <input type="number" name="freight_value" step="0.01" placeholder="10.00">
+                                    <input type="number" name="freight_value" step="0.01">
                                 </div>
                             </div>
                         </div>
@@ -623,7 +634,7 @@
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label>Nombre de Versements</label>
-                                    <input type="number" name="payment_installments" min="1" placeholder="1">
+                                    <input type="number" name="payment_installments" min="1">
                                 </div>
                                 <div class="form-group">
                                     <label>Date et Heure d'Approbation</label>
@@ -647,11 +658,11 @@
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label>Latitude</label>
-                                    <input type="number" name="customer_lat" step="0.0001" placeholder="-23.5505">
+                                    <input type="number" name="customer_lat" step="0.0001">
                                 </div>
                                 <div class="form-group">
                                     <label>Longitude</label>
-                                    <input type="number" name="customer_lng" step="0.0001" placeholder="-46.6333">
+                                    <input type="number" name="customer_lng" step="0.0001">
                                 </div>
                             </div>
                         </div>
@@ -664,18 +675,36 @@
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label>Date Livraison Estimée</label>
-                                    <div class="hint">Format: YYYY-MM-DD HH:MM:SS</div>
-                                    <input type="text" name="order_estimated_delivery_date" placeholder="2024-05-20 23:59:59">
+                                    <div class="datetime-group">
+                                        <div class="form-group">
+                                            <input type="date" name="order_estimated_delivery_date">
+                                        </div>
+                                        <div class="form-group">
+                                            <input type="time" name="order_estimated_delivery_time">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label>Date Livraison Réelle</label>
-                                    <div class="hint">Format: YYYY-MM-DD HH:MM:SS</div>
-                                    <input type="text" name="order_delivered_customer_date" placeholder="2024-05-18 10:00:00">
+                                    <div class="datetime-group">
+                                        <div class="form-group">
+                                            <input type="date" name="order_delivered_customer_date">
+                                        </div>
+                                        <div class="form-group">
+                                            <input type="time" name="order_delivered_customer_time">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label>Date Livraison Transporteur</label>
-                                    <div class="hint">Format: YYYY-MM-DD HH:MM:SS</div>
-                                    <input type="text" name="order_delivered_carrier_date" placeholder="2024-05-17 08:00:00">
+                                    <div class="datetime-group">
+                                        <div class="form-group">
+                                            <input type="date" name="order_delivered_carrier_date">
+                                        </div>
+                                        <div class="form-group">
+                                            <input type="time" name="order_delivered_carrier_time">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -699,8 +728,14 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Date Avis</label>
-                                    <div class="hint">Format: YYYY-MM-DD HH:MM:SS</div>
-                                    <input type="text" name="review_creation_date" placeholder="2024-05-22 15:30:00">
+                                    <div class="datetime-group">
+                                        <div class="form-group">
+                                            <input type="date" name="review_creation_date">
+                                        </div>
+                                        <div class="form-group">
+                                            <input type="time" name="review_creation_time">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -768,12 +803,55 @@
             if (btn) btn.classList.add('active');
         }
 
+        // Reset form and clear results
+        document.getElementById('predictionForm').addEventListener('reset', (e) => {
+            // Hide result section
+            document.getElementById('resultSection').classList.remove('show');
+            // Hide error message
+            document.getElementById('errorMessage').classList.remove('show');
+            // Hide loading
+            document.getElementById('loading').style.display = 'none';
+        });
+
         // Form submission
         document.getElementById('predictionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const formData = new FormData(document.getElementById('predictionForm'));
-            const orders = [Object.fromEntries(formData)];
+            let data = Object.fromEntries(formData);
+            
+            // Combine date and time fields for delivery dates
+            if (data.order_estimated_delivery_date && data.order_estimated_delivery_time) {
+                data.order_estimated_delivery_date = data.order_estimated_delivery_date + ' ' + data.order_estimated_delivery_time;
+                delete data.order_estimated_delivery_time;
+            }
+            if (data.order_delivered_customer_date && data.order_delivered_customer_time) {
+                data.order_delivered_customer_date = data.order_delivered_customer_date + ' ' + data.order_delivered_customer_time;
+                delete data.order_delivered_customer_time;
+            }
+            if (data.order_delivered_carrier_date && data.order_delivered_carrier_time) {
+                data.order_delivered_carrier_date = data.order_delivered_carrier_date + ' ' + data.order_delivered_carrier_time;
+                delete data.order_delivered_carrier_time;
+            }
+            
+            // Combine date and time for purchase and approval
+            if (data.order_purchase_date && data.order_purchase_time) {
+                data.order_purchase_timestamp = data.order_purchase_date + ' ' + data.order_purchase_time;
+                delete data.order_purchase_date;
+                delete data.order_purchase_time;
+            }
+            if (data.order_approved_date && data.order_approved_time) {
+                data.order_approved_at = data.order_approved_date + ' ' + data.order_approved_time;
+                delete data.order_approved_date;
+                delete data.order_approved_time;
+            }
+            // Combine date and time for review
+            if (data.review_creation_date && data.review_creation_time) {
+                data.review_creation_date = data.review_creation_date + ' ' + data.review_creation_time;
+                delete data.review_creation_time;
+            }
+            
+            const orders = [data];
             orders[0] = Object.fromEntries(
                 Object.entries(orders[0]).map(([k, v]) => [k, v === '' ? null : v])
             );
