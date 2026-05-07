@@ -1,5 +1,6 @@
 # Dépendances minimales pour l’image Docker API (build Railway plus rapide et fiable)
 fastapi>=0.109.0
+python-multipart>=0.0.9
 uvicorn[standard]>=0.27.0
 pydantic>=2.5.0
 pandas>=2.1.0
