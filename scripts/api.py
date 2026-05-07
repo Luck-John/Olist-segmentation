@@ -502,34 +502,27 @@ def ui_home(request: Request):
 
 @app.get("/form", response_class=HTMLResponse)
 def ui_form(request: Request):
-    """Form-based UI for easier customer data input"""
+    """Form-based UI for easier customer data input — served as raw HTML (no Jinja2 needed)."""
+    html_path = TEMPLATES_DIR / "ui_form.html"
     try:
-        return templates.TemplateResponse(
-            "ui_form.html",
-            {"request": request},
-        )
+        return HTMLResponse(content=html_path.read_text(encoding="utf-8"), status_code=200)
     except Exception as e:
-        logger.error(f"Error rendering /form template: {e}")
+        logger.error(f"Error reading /form template: {e}")
         return _fallback_html(
             "Formulaire de saisie",
-            f"Erreur de rendu du template : <code>{e}</code><br>"
-            f"Templates dir: <code>{TEMPLATES_DIR}</code> (exists={TEMPLATES_DIR.exists()})",
+            f"Impossible de lire le fichier template : <code>{e}</code><br>"
+            f"Chemin attendu : <code>{html_path}</code> (exists={html_path.exists()})",
         )
 
 
 @app.get("/simple", response_class=HTMLResponse)
 def ui_simple(request: Request):
-    """Simple form-based UI for customer data input"""
+    """Simple form-based UI — served as raw HTML (no Jinja2 needed)."""
+    html_path = TEMPLATES_DIR / "ui_simple.html"
     try:
-        return templates.TemplateResponse(
-            "ui_simple.html",
-            {
-                "request": request,
-                "base_url": str(request.base_url).rstrip("/"),
-            },
-        )
+        return HTMLResponse(content=html_path.read_text(encoding="utf-8"), status_code=200)
     except Exception as e:
-        logger.error(f"Error rendering /simple template: {e}")
+        logger.error(f"Error reading /simple template: {e}")
         return _fallback_html("Interface simple", f"Erreur: <code>{e}</code>")
 
 
