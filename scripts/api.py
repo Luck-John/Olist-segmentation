@@ -11,6 +11,8 @@ import os
 import sys
 import json
 import pickle
+import asyncio
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import List, Dict, Optional
 from io import StringIO
@@ -146,17 +148,24 @@ class SegmentationAPI:
             self.cluster_profiles_median = pd.read_csv(median_path, index_col=0)
             logger.info(f"Loaded cluster profiles (median)")
         
-        # Load final segmentation
-        final_path = self.reports_dir / "segmentation_finale_olist.csv"
-        if final_path.exists():
-            self.final_results = pd.read_csv(final_path)
-            logger.info(f"Loaded final results: {len(self.final_results)} customers")
-        
+        # segmentation_finale_olist.csv est volumineux : chargé à la demande (voir _ensure_final_results)
+        self.final_results = None
+
         # Load clustering comparison
         comp_path = self.reports_dir / "clustering_comparison.csv"
         if comp_path.exists():
             self.clustering_comparison = pd.read_csv(comp_path)
             logger.info(f"Loaded clustering comparison")
+
+    def _ensure_final_results(self) -> None:
+        """Charge le CSV de segmentation complète seulement quand /statistics est appelé."""
+        if self.final_results is not None:
+            return
+        final_path = self.reports_dir / "segmentation_finale_olist.csv"
+        if not final_path.exists():
+            raise ValueError("Final results file not found")
+        self.final_results = pd.read_csv(final_path)
+        logger.info(f"Loaded final results (lazy): {len(self.final_results)} customers")
 
     def predict_segment(self, features: Dict[str, float]) -> Dict:
         """
@@ -300,8 +309,7 @@ class SegmentationAPI:
 
     def get_segment_statistics(self) -> Dict:
         """Get statistics about segments in final results"""
-        if self.final_results is None:
-            raise ValueError("Final results not loaded")
+        self._ensure_final_results()
         
         stats = {
             "total_customers": len(self.final_results),
@@ -324,10 +332,53 @@ class SegmentationAPI:
 # FASTAPI APPLICATION SETUP
 # ============================================================================
 
+segmentation_api: Optional[SegmentationAPI] = None
+_api_init_task: Optional[asyncio.Task] = None
+
+
+def _build_segmentation_api() -> SegmentationAPI:
+    return SegmentationAPI(
+        model_dir="notebooks/models",
+        reports_dir="notebooks/reports",
+    )
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Démarre l’écoute HTTP tout de suite ; charge le modèle dans un thread pour que
+    Railway / Docker healthchecks ne reçoivent pas « service unavailable » pendant pickle + CSV.
+    """
+    global segmentation_api, _api_init_task
+
+    async def _init():
+        global segmentation_api
+        try:
+            loop = asyncio.get_running_loop()
+            segmentation_api = await loop.run_in_executor(
+                None,
+                _build_segmentation_api,
+            )
+            logger.info("API initialized successfully (background)")
+        except Exception as e:
+            logger.exception("Failed to initialize API: %s", e)
+            segmentation_api = None
+
+    _api_init_task = asyncio.create_task(_init())
+    yield
+    if _api_init_task is not None and not _api_init_task.done():
+        _api_init_task.cancel()
+        try:
+            await _api_init_task
+        except asyncio.CancelledError:
+            pass
+
+
 app = FastAPI(
     title="Customer Segmentation API",
     description="API for customer clustering and segmentation",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 templates = Jinja2Templates(directory="templates")
@@ -340,26 +391,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-segmentation_api: Optional[SegmentationAPI] = None
-
-
-@app.on_event("startup")
-def _startup_load_assets():
-    """
-    Load model + reports at server startup (not at import time).
-    This keeps `import scripts.api` fast and makes failures visible in /health.
-    """
-    global segmentation_api
-    try:
-        segmentation_api = SegmentationAPI(
-            model_dir="notebooks/models",
-            reports_dir="notebooks/reports",
-        )
-        logger.info("API initialized successfully")
-    except Exception as e:
-        logger.exception(f"Failed to initialize API: {e}")
-        segmentation_api = None
 
 
 # ============================================================================
@@ -527,10 +558,16 @@ def ui_predict(request: Request, raw_json: str = Form(""), raw_csv: str = Form("
 
 @app.get("/health")
 def health_check():
-    """Health check endpoint"""
+    """Health check endpoint (200 dès que le process répond ; voir api_ready pour le modèle)."""
+    loading = (
+        _api_init_task is not None
+        and not _api_init_task.done()
+        and segmentation_api is None
+    )
     return {
         "status": "healthy",
         "api_ready": segmentation_api is not None,
+        "api_loading": loading,
         "model_loaded": segmentation_api.pipeline is not None if segmentation_api else False,
     }
 
