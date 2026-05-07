@@ -24,25 +24,39 @@
             padding: 2rem;
         }
 
-        /* Header */
+        /* Header with Logo */
         .header {
             background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
             color: white;
-            padding: 3rem 2rem;
+            padding: 2rem 2rem;
             border-radius: 12px;
             margin-bottom: 2rem;
             box-shadow: 0 4px 15px rgba(0, 102, 204, 0.2);
-            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
         }
 
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
+        .olist-logo {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .header-text h1 {
+            font-size: 2rem;
+            margin-bottom: 0.3rem;
             font-weight: 700;
         }
 
-        .header p {
-            font-size: 1.1rem;
+        .header-text p {
+            font-size: 0.95rem;
             opacity: 0.95;
         }
 
@@ -159,12 +173,28 @@
             color: #aaa;
         }
 
+        /* Date/Time inputs */
+        .datetime-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .datetime-group .form-group {
+            margin-bottom: 0;
+        }
+
+        .datetime-group .form-group label {
+            font-size: 0.85rem;
+        }
+
         /* Buttons */
         .button-group {
             display: flex;
             gap: 1rem;
             margin-top: 2rem;
             justify-content: center;
+            flex-wrap: wrap;
         }
 
         button {
@@ -242,16 +272,25 @@
 
         .result-header {
             color: #0066cc;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 600;
             margin-bottom: 1rem;
+            border-bottom: 2px solid #0066cc;
+            padding-bottom: 0.5rem;
+        }
+
+        /* Main Results */
+        .result-main {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e0e8f0;
         }
 
         .result-item {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             padding: 0.75rem 0;
-            border-bottom: 1px solid #e0e8f0;
         }
 
         .result-item:last-child {
@@ -277,7 +316,56 @@
             border-radius: 20px;
             font-size: 0.9rem;
             font-weight: 600;
-            margin-top: 0.5rem;
+        }
+
+        /* Features Grid */
+        .features-section {
+            margin-top: 1.5rem;
+        }
+
+        .features-title {
+            color: #0066cc;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: #e8f1f9;
+            border-radius: 6px;
+            border-left: 4px solid #0066cc;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+
+        .feature-card {
+            background: white;
+            border: 1px solid #e0e8f0;
+            border-radius: 6px;
+            padding: 0.75rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: #0066cc;
+            box-shadow: 0 2px 8px rgba(0, 102, 204, 0.15);
+        }
+
+        .feature-name {
+            font-size: 0.85rem;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            word-wrap: break-word;
+        }
+
+        .feature-value {
+            font-size: 1.1rem;
+            color: #0066cc;
+            font-weight: 600;
         }
 
         /* Error message */
@@ -335,11 +423,13 @@
             }
 
             .header {
-                padding: 2rem 1rem;
+                flex-direction: column;
+                text-align: center;
+                padding: 1.5rem 1rem;
             }
 
             .header h1 {
-                font-size: 1.8rem;
+                font-size: 1.6rem;
             }
 
             .form-grid {
@@ -352,6 +442,14 @@
 
             button {
                 width: 100%;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .datetime-group {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -384,10 +482,25 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
+        <!-- Header with Logo -->
         <div class="header">
-            <h1>🎯 Segmentation Clients Olist</h1>
-            <p>Analysez et catégorisez les clients en fonction de leurs comportements d'achat</p>
+            <div class="olist-logo">
+                <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="60" height="60" rx="8" fill="white" fill-opacity="0.1"/>
+                    <circle cx="15" cy="15" r="5" fill="white"/>
+                    <circle cx="45" cy="15" r="5" fill="white"/>
+                    <circle cx="30" cy="30" r="5" fill="white"/>
+                    <circle cx="15" cy="45" r="5" fill="white"/>
+                    <circle cx="45" cy="45" r="5" fill="white"/>
+                    <line x1="15" y1="20" x2="15" y2="40" stroke="white" stroke-width="1.5" stroke-opacity="0.6"/>
+                    <line x1="20" y1="15" x2="40" y2="15" stroke="white" stroke-width="1.5" stroke-opacity="0.6"/>
+                    <line x1="45" y1="20" x2="45" y2="40" stroke="white" stroke-width="1.5" stroke-opacity="0.6"/>
+                </svg>
+            </div>
+            <div class="header-text">
+                <h1>🎯 Segmentation Clients Olist</h1>
+                <p>Analysez et catégorisez les clients en fonction de leurs comportements d'achat</p>
+            </div>
         </div>
 
         <!-- Form -->
@@ -400,10 +513,10 @@
             <div class="form-content">
                 <!-- Tabs -->
                 <div class="tabs">
-                    <button class="tab active" onclick="switchTab('order')">Informations Commande</button>
-                    <button class="tab" onclick="switchTab('customer')">Localisation Client</button>
-                    <button class="tab" onclick="switchTab('delivery')">Livraison & Paiement</button>
-                    <button class="tab" onclick="switchTab('review')">Évaluation</button>
+                    <button class="tab active" onclick="switchTab('order')">📦 Informations Commande</button>
+                    <button class="tab" onclick="switchTab('customer')">📍 Localisation Client</button>
+                    <button class="tab" onclick="switchTab('delivery')">🚚 Livraison & Paiement</button>
+                    <button class="tab" onclick="switchTab('review')">⭐ Évaluation</button>
                 </div>
 
                 <form id="predictionForm">
@@ -413,31 +526,39 @@
                             <div class="section-title">Informations de Commande</div>
                             <div class="form-grid">
                                 <div class="form-group">
-                                    <label>ID Commande</label>
+                                    <label>ID Commande *</label>
                                     <input type="text" name="order_id" placeholder="ex: abc123" required>
                                 </div>
                                 <div class="form-group">
-                                    <label>ID Client Unique</label>
+                                    <label>ID Client Unique *</label>
                                     <input type="text" name="customer_unique_id" placeholder="ex: cust456" required>
                                 </div>
                                 <div class="form-group">
-                                    <label>Statut Commande</label>
+                                    <label>Statut Commande *</label>
                                     <select name="order_status" required>
                                         <option value="">-- Sélectionner --</option>
-                                        <option value="delivered">Livrée</option>
-                                        <option value="shipped">Expédiée</option>
-                                        <option value="processing">En cours</option>
-                                        <option value="canceled">Annulée</option>
-                                        <option value="unavailable">Indisponible</option>
+                                        <option value="delivered">✓ Livrée</option>
+                                        <option value="shipped">📦 Expédiée</option>
+                                        <option value="processing">⏳ En cours</option>
+                                        <option value="canceled">✗ Annulée</option>
+                                        <option value="unavailable">🚫 Indisponible</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label>Date Achat</label>
-                                    <div class="hint">Format: YYYY-MM-DD HH:MM:SS</div>
-                                    <input type="text" name="order_purchase_timestamp" placeholder="2024-05-15 14:30:00" required>
+                                    <label>Date et Heure d'Achat *</label>
+                                    <div class="datetime-group">
+                                        <div class="form-group">
+                                            <label style="font-size: 0.85rem;">📅 Date</label>
+                                            <input type="date" name="order_purchase_date" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label style="font-size: 0.85rem;">🕐 Heure</label>
+                                            <input type="time" name="order_purchase_time" required>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="form-group">
-                                    <label>Montant de Paiement (BRL)</label>
+                                    <label>Montant de Paiement (BRL) *</label>
                                     <input type="number" name="payment_value" step="0.01" placeholder="150.50" required>
                                 </div>
                                 <div class="form-group">
@@ -445,8 +566,19 @@
                                     <input type="number" name="price" step="0.01" placeholder="100.00">
                                 </div>
                                 <div class="form-group">
-                                    <label>Catégorie Produit</label>
-                                    <input type="text" name="super_categorie" placeholder="ex: electronics">
+                                    <label>Catégorie Produit *</label>
+                                    <select name="super_categorie" required>
+                                        <option value="">-- Sélectionner --</option>
+                                        <option value="electronics">📱 Électronique</option>
+                                        <option value="home">🏠 Maison</option>
+                                        <option value="health_beauty">💄 Santé & Beauté</option>
+                                        <option value="sports">⚽ Sports</option>
+                                        <option value="furniture">🪑 Mobilier</option>
+                                        <option value="fashion">👗 Mode</option>
+                                        <option value="books">📚 Livres</option>
+                                        <option value="toys">🧸 Jouets</option>
+                                        <option value="garden">🌱 Jardin</option>
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label>Frais de Port (BRL)</label>
@@ -463,9 +595,17 @@
                                     <input type="number" name="payment_installments" min="1" placeholder="1">
                                 </div>
                                 <div class="form-group">
-                                    <label>Date Approbation</label>
-                                    <div class="hint">Format: YYYY-MM-DD HH:MM:SS</div>
-                                    <input type="text" name="order_approved_at" placeholder="2024-05-15 14:35:00">
+                                    <label>Date et Heure d'Approbation</label>
+                                    <div class="datetime-group">
+                                        <div class="form-group">
+                                            <label style="font-size: 0.85rem;">📅 Date</label>
+                                            <input type="date" name="order_approved_date">
+                                        </div>
+                                        <div class="form-group">
+                                            <label style="font-size: 0.85rem;">🕐 Heure</label>
+                                            <input type="time" name="order_approved_time">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -606,19 +746,24 @@
             event.target.classList.add('active');
         }
 
+        // Tab switching  
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
         // Form submission
         document.getElementById('predictionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const formData = new FormData(document.getElementById('predictionForm'));
             const orders = [Object.fromEntries(formData)];
-
-            // Convert empty values to null
             orders[0] = Object.fromEntries(
                 Object.entries(orders[0]).map(([k, v]) => [k, v === '' ? null : v])
             );
 
-            // Show loading
             document.getElementById('loading').style.display = 'block';
             document.getElementById('errorMessage').classList.remove('show');
             document.getElementById('resultSection').classList.remove('show');
@@ -626,9 +771,7 @@
             try {
                 const response = await fetch('/predict-raw', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ orders: [orders[0]] })
                 });
 
@@ -638,8 +781,6 @@
                 }
 
                 const result = await response.json();
-
-                // Display results
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('resultSection').classList.add('show');
                 document.getElementById('successMessage').textContent = '✓ Prédiction réussie!';
@@ -652,7 +793,30 @@
                 document.getElementById('confidencePercent').textContent = confidence + '%';
                 document.getElementById('confidenceFill').style.width = confidence + '%';
 
-                // Scroll to results
+                // Display engineered features (all 14)
+                const featuresDisplay = document.getElementById('featuresDisplay');
+                if (result.engineered_features && featuresDisplay) {
+                    const features = result.engineered_features;
+                    const featureLine = `
+                        <strong>14 Features Calculées:</strong>
+                        Recency: ${features.Recency?.toFixed(2) || '-'} | 
+                        Monetary: ${features.Monetary?.toFixed(2) || '-'} | 
+                        avg_installments: ${features.avg_installments?.toFixed(2) || '-'} | 
+                        avg_review_score_available: ${features.avg_review_score_available?.toFixed(2) || '-'} | 
+                        late_delivery_rate: ${features.late_delivery_rate?.toFixed(4) || '-'} | 
+                        avg_delivery_days: ${features.avg_delivery_days?.toFixed(2) || '-'} | 
+                        avg_delivery_delta: ${features.avg_delivery_delta?.toFixed(2) || '-'} | 
+                        avg_freight_ratio: ${features.avg_freight_ratio?.toFixed(4) || '-'} | 
+                        avg_basket_size: ${features.avg_basket_size?.toFixed(2) || '-'} | 
+                        dist_sao_paulo: ${features.dist_sao_paulo?.toFixed(4) || '-'} | 
+                        most_frequent_purchase_hour: ${features.most_frequent_purchase_hour?.toFixed(0) || '-'} | 
+                        most_frequent_purchase_day: ${features.most_frequent_purchase_day?.toFixed(0) || '-'} | 
+                        spend_health_beauty: ${features["spend_('price', 'health_beauty')"]?.toFixed(2) || '-'} | 
+                        spend_home: ${features["spend_('price', 'home')"]?.toFixed(2) || '-'}
+                    `;
+                    featuresDisplay.innerHTML = featureLine;
+                }
+
                 document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
             } catch (error) {
@@ -662,7 +826,7 @@
             }
         });
 
-        // Example data
+        // Example data - improved with date/time
         function loadExample() {
             const exampleData = {
                 order_id: 'ORDER-2024-001',
