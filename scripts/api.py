@@ -219,16 +219,38 @@ class SegmentationAPI:
         if missing:
             raise ValueError(f"Missing features: {missing}")
         
-        # Create feature vector in correct order
-        X = np.array([features[col] for col in self.pipeline['feature_cols']]).reshape(1, -1)
+        # Create feature vector in correct order - START WITH FLOAT32 to match model dtype
+        logger.info(f"Step 1: Creating feature vector from {len(features)} features")
+        X = np.array([features[col] for col in self.pipeline['feature_cols']], dtype=np.float32).reshape(1, -1)
+        logger.info(f"Step 1 OK: X shape={X.shape}, dtype={X.dtype}")
         
-        # Scale
+        # Scale - will output whatever dtype scaler produces, then convert to float32
+        logger.info(f"Step 2: Scaling with {type(self.pipeline['scaler'])}")
         scaler = self.pipeline['scaler']
         X_scaled = scaler.transform(X)
+        logger.info(f"Step 2 OK: X_scaled shape={X_scaled.shape}, dtype={X_scaled.dtype}")
+        X_scaled = np.asarray(X_scaled, dtype=np.float32)
+        logger.info(f"Step 2 CAST: X_scaled dtype={X_scaled.dtype} after cast to float32")
         
-        # Predict cluster
+        # PCA transform - convert to float32
+        logger.info(f"Step 3: PCA transform")
+        pca = self.pipeline['pca']
+        X_pca_full = pca.transform(X_scaled)
+        logger.info(f"Step 3 OK: X_pca shape={X_pca_full.shape}, dtype={X_pca_full.dtype}")
+        X_pca_full = np.asarray(X_pca_full, dtype=np.float32)
+        
+        # Predict cluster with float32 input to match model
+        logger.info(f"Step 4: Predicting with model")
         model = self.pipeline['model']
-        cluster = model.predict(X_scaled)[0]
+        model_dtype = model.cluster_centers_.dtype
+        logger.info(f"Model centers dtype: {model_dtype}, X_scaled dtype: {X_scaled.dtype}")
+        
+        # Ensure both are the same dtype
+        X_for_predict = X_scaled.astype(model_dtype, copy=False)
+        logger.info(f"Step 4: Calling predict with dtype={X_for_predict.dtype}")
+        
+        cluster = model.predict(X_for_predict)[0]
+        logger.info(f"Step 4 OK: Predicted cluster {cluster}")
         
         # Get segment name and action
         cluster_names = self.pipeline['cluster_names']
@@ -237,20 +259,19 @@ class SegmentationAPI:
         segment_actions = self.pipeline['segment_actions']
         segment_action = segment_actions.get(str(cluster), "Standard")
         
-        # Calculate PCA projection
-        pca = self.pipeline['pca']
-        X_pca = pca.transform(X_scaled)
+        # Get 2D PCA for visualization
+        X_pca_2d = X_pca_full[:, :2]
         
         # Calculate distance to cluster center for confidence
-        distances = np.linalg.norm(model.cluster_centers_[cluster] - X_scaled[0])
+        distances = np.linalg.norm(model.cluster_centers_[cluster] - X_for_predict[0])
         confidence = 1.0 / (1.0 + distances)
         
         return {
             "cluster": int(cluster),
             "segment_name": segment_name,
             "segment_action": segment_action,
-            "pca_1": float(X_pca[0, 0]),
-            "pca_2": float(X_pca[0, 1]),
+            "pca_1": float(X_pca_2d[0, 0]),
+            "pca_2": float(X_pca_2d[0, 1]),
             "confidence": float(confidence),
         }
 
@@ -517,14 +538,14 @@ def ui_home(request: Request):
 
 @app.get("/form", response_class=HTMLResponse)
 def ui_form(request: Request):
-    """Form-based UI for easier customer data input — served as raw HTML (no Jinja2 needed)."""
-    html_path = TEMPLATES_DIR / "ui_form.html"
+    """Form-based UI for customer segmentation prediction — served as raw HTML (no Jinja2 needed)."""
+    html_path = TEMPLATES_DIR / "segmentation_form.html"
     try:
         return HTMLResponse(content=html_path.read_text(encoding="utf-8"), status_code=200)
     except Exception as e:
         logger.error(f"Error reading /form template: {e}")
         return _fallback_html(
-            "Formulaire de saisie",
+            "Formulaire de Segmentation",
             f"Impossible de lire le fichier template : <code>{e}</code><br>"
             f"Chemin attendu : <code>{html_path}</code> (exists={html_path.exists()})",
         )

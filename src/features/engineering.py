@@ -3,7 +3,7 @@ Feature engineering module - RFM and other customer features
 """
 import pandas as pd
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Dict
 from scipy.stats import mstats
 
 from src.utils.config import load_config, get_logger
@@ -210,6 +210,110 @@ def calculate_geographic_metrics(df: pd.DataFrame, reference_coords: Tuple[float
     return result
 
 
+def calculate_payment_metrics(df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
+    """
+    Calculate average installments and freight ratio.
+    
+    Args:
+        df: DataFrame with payment_installments and freight_value, price columns
+    
+    Returns:
+        Tuple of (avg_installments, avg_freight_ratio) Series
+    """
+    # Average installments per customer
+    avg_inst = df.groupby('customer_unique_id')['payment_installments'].mean()
+    avg_inst = avg_inst.fillna(1)  # Default to 1 if no payment info
+    
+    # Average freight ratio (freight_value / price, handling division by zero)
+    df_copy = df.copy()
+    df_copy['freight_ratio'] = df_copy.apply(
+        lambda row: row['freight_value'] / row['price'] if row['price'] > 0 else 0,
+        axis=1
+    )
+    avg_freight = df_copy.groupby('customer_unique_id')['freight_ratio'].mean()
+    
+    logger.info(f"Payment metrics calculated for {len(avg_inst)} customers")
+    return avg_inst, avg_freight
+
+
+def calculate_temporal_features(df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
+    """
+    Extract temporal features: purchase hour and day of week.
+    
+    Args:
+        df: DataFrame with order_purchase_timestamp
+    
+    Returns:
+        Tuple of (most_frequent_hour, most_frequent_day) Series
+    """
+    df_copy = df.copy()
+    df_copy['purchase_hour'] = pd.to_datetime(df_copy['order_purchase_timestamp']).dt.hour
+    df_copy['purchase_day'] = pd.to_datetime(df_copy['order_purchase_timestamp']).dt.dayofweek
+    
+    # Most frequent purchase hour
+    most_freq_hour = df_copy.groupby('customer_unique_id')['purchase_hour'].apply(
+        lambda x: x.mode()[0] if len(x.mode()) > 0 else x.iloc[0]
+    )
+    
+    # Most frequent purchase day
+    most_freq_day = df_copy.groupby('customer_unique_id')['purchase_day'].apply(
+        lambda x: x.mode()[0] if len(x.mode()) > 0 else x.iloc[0]
+    )
+    
+    logger.info(f"Temporal features calculated for {len(most_freq_hour)} customers")
+    return most_freq_hour, most_freq_day
+
+
+def calculate_category_spend(df: pd.DataFrame, categories: list = None) -> Dict[str, pd.Series]:
+    """
+    Calculate spending by product category.
+    
+    Args:
+        df: DataFrame with super_categorie and price
+        categories: List of category names to track (e.g., ['health_beauty', 'home'])
+    
+    Returns:
+        Dictionary mapping category name to spending Series
+    """
+    if categories is None:
+        categories = ['health_beauty', 'home']
+    
+    df_copy = df.copy()
+    df_copy['super_categorie'] = df_copy['super_categorie'].fillna('unknown').str.lower()
+    
+    result = {}
+    for cat in categories:
+        # Spend on specific category
+        cat_mask = df_copy['super_categorie'].str.contains(cat, na=False, case=False)
+        spend = df_copy[cat_mask].groupby('customer_unique_id')['price'].sum()
+        spend = spend.reindex(df_copy['customer_unique_id'].unique(), fill_value=0)
+        result[f"spend_('price', '{cat}')"] = spend
+    
+    logger.info(f"Category spend calculated for {len(result)} categories")
+    return result
+
+
+def calculate_basket_size(df: pd.DataFrame) -> pd.Series:
+    """
+    Calculate average basket size (average order value per customer).
+    
+    Args:
+        df: DataFrame with price and order_id
+    
+    Returns:
+        Series with average basket size (avg price per order)
+    """
+    # Group by order to get order totals
+    order_totals = df.groupby(['customer_unique_id', 'order_id'])['price'].sum().reset_index()
+    
+    # Calculate average basket size per customer
+    basket_size = order_totals.groupby('customer_unique_id')['price'].mean()
+    basket_size = basket_size.fillna(0)
+    
+    logger.info(f"Basket size calculated for {len(basket_size)} customers")
+    return basket_size
+
+
 class FeatureEngineer:
     """Main class for feature engineering"""
     
@@ -291,6 +395,25 @@ class FeatureEngineer:
         dist = calculate_geographic_metrics(df, sao_paulo)
         df_client['dist_sao_paulo'] = df_client['customer_unique_id'].map(dist)
         
+        # Add payment metrics
+        avg_inst, avg_freight = calculate_payment_metrics(df)
+        df_client['avg_installments'] = df_client['customer_unique_id'].map(avg_inst)
+        df_client['avg_freight_ratio'] = df_client['customer_unique_id'].map(avg_freight)
+        
+        # Add temporal features
+        most_hour, most_day = calculate_temporal_features(df)
+        df_client['most_frequent_purchase_hour'] = df_client['customer_unique_id'].map(most_hour)
+        df_client['most_frequent_purchase_day'] = df_client['customer_unique_id'].map(most_day)
+        
+        # Add category spend
+        spend_dict = calculate_category_spend(df, ['health_beauty', 'home'])
+        for cat_name, cat_series in spend_dict.items():
+            df_client[cat_name] = df_client['customer_unique_id'].map(cat_series)
+        
+        # Add basket size
+        basket = calculate_basket_size(df)
+        df_client['avg_basket_size'] = df_client['customer_unique_id'].map(basket)
+        
         # Fill NaN values
         numeric_cols = df_client.select_dtypes(include='number').columns
         for col in numeric_cols:
@@ -301,7 +424,7 @@ class FeatureEngineer:
         # apply safe fallbacks to keep features usable for prediction.
         if "avg_review_score_available" in df_client.columns and df_client["avg_review_score_available"].isna().any():
             df_client["avg_review_score_available"] = df_client["avg_review_score_available"].fillna(
-                df_client.get("avg_review_score_full")
+                df_client.get("avg_review_score_full", 0)
             )
         if "has_available_review" in df_client.columns and df_client["has_available_review"].isna().any():
             df_client["has_available_review"] = df_client["has_available_review"].fillna(
@@ -309,6 +432,16 @@ class FeatureEngineer:
             )
         if "dist_sao_paulo" in df_client.columns and df_client["dist_sao_paulo"].isna().any():
             df_client["dist_sao_paulo"] = df_client["dist_sao_paulo"].fillna(0)
+        if "avg_installments" in df_client.columns and df_client["avg_installments"].isna().any():
+            df_client["avg_installments"] = df_client["avg_installments"].fillna(1)
+        if "avg_freight_ratio" in df_client.columns and df_client["avg_freight_ratio"].isna().any():
+            df_client["avg_freight_ratio"] = df_client["avg_freight_ratio"].fillna(0)
+        if "most_frequent_purchase_hour" in df_client.columns and df_client["most_frequent_purchase_hour"].isna().any():
+            df_client["most_frequent_purchase_hour"] = df_client["most_frequent_purchase_hour"].fillna(12)
+        if "most_frequent_purchase_day" in df_client.columns and df_client["most_frequent_purchase_day"].isna().any():
+            df_client["most_frequent_purchase_day"] = df_client["most_frequent_purchase_day"].fillna(3)
+        if "avg_basket_size" in df_client.columns and df_client["avg_basket_size"].isna().any():
+            df_client["avg_basket_size"] = df_client["avg_basket_size"].fillna(0)
         
         logger.info(f"Features engineered. Final shape: {df_client.shape}")
         return df_client

@@ -1,7 +1,5 @@
-cluster,Recency,Monetary,Frequency,avg_delivery_days,late_delivery_rate
-0,262.5,1070.22,1.0,11.0,0.0
-1,276.0,108.51,1.0,11.0,0.0
-2,271.0,101.34,1.0,9.0,0.0
-3,239.0,111.86,1.0,29.0,1.0
-4,298.5,118.08,1.0,13.0,0.0
-5,249.0,220.28,2.0,10.5,0.0
+cluster,Recency,Monetary,avg_review_score_available,avg_delivery_days,avg_installments,avg_freight_ratio,dist_sao_paulo,avg_basket_size,late_delivery_rate
+0,272.0,171.68,4.0,9.0,2.0,0.22,350.27,2.0,0.0
+1,238.0,108.42,2.0,29.0,2.0,0.19,381.94,1.0,1.0
+2,272.0,96.95,5.0,9.0,1.0,0.19,353.48,1.0,0.0
+3,250.0,299.85,5.0,10.0,4.0,0.08,393.22,1.0,0.0

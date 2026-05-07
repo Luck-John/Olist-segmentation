@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segmentation Clients Olist</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e8f1f9 100%);
+            color: #1a3a52;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 102, 204, 0.2);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        /* Form container */
+        .form-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        /* Form header */
+        .form-header {
+            background: #f8fbff;
+            border-bottom: 2px solid #0066cc;
+            padding: 1.5rem;
+        }
+
+        .form-header h2 {
+            color: #0066cc;
+            font-size: 1.5rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .form-header p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* Form content */
+        .form-content {
+            padding: 2rem;
+        }
+
+        /* Sections */
+        .form-section {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #e0e8f0;
+        }
+
+        .form-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .section-title {
+            color: #0066cc;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #0066cc, #0052a3);
+            border-radius: 2px;
+        }
+
+        /* Form grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Form group */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            color: #1a3a52;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-group .hint {
+            font-size: 0.8rem;
+            color: #999;
+            margin-bottom: 0.3rem;
+            font-style: italic;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 0.75rem;
+            border: 2px solid #e0e8f0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #0066cc;
+            background-color: #f8fbff;
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: #aaa;
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: center;
+        }
+
+        button {
+            padding: 0.85rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 102, 204, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f0f4f8;
+            color: #0066cc;
+            border: 2px solid #0066cc;
+        }
+
+        .btn-secondary:hover {
+            background: #e8f1f9;
+        }
+
+        /* Loading state */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: #0066cc;
+        }
+
+        .spinner {
+            border: 3px solid #e0e8f0;
+            border-top: 3px solid #0066cc;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Result section */
+        .result-section {
+            display: none;
+            background: #f8fbff;
+            border-left: 4px solid #0066cc;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin-top: 2rem;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-header {
+            color: #0066cc;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e0e8f0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .result-value {
+            color: #0066cc;
+            font-weight: 600;
+        }
+
+        /* Segment badge */
+        .segment-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #0066cc;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        /* Error message */
+        .error-message {
+            display: none;
+            background: #fee;
+            color: #c00;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            border-left: 4px solid #c00;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e0e8f0;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            color: #666;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            margin-bottom: -2px;
+        }
+
+        .tab.active {
+            color: #0066cc;
+            border-bottom-color: #0066cc;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header {
+                padding: 2rem 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+
+        /* Success message */
+        .success-badge {
+            background: linear-gradient(135deg, #00b366 0%, #008c4d 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0066cc, #0052a3);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎯 Segmentation Clients Olist</h1>
+            <p>Analysez et catégorisez les clients en fonction de leurs comportements d'achat</p>
+        </div>
+
+        <!-- Form -->
+        <div class="form-container">
+            <div class="form-header">
+                <h2>Saisie des Données Client</h2>
+                <p>Remplissez les informations de commande pour prédire le segment client</p>
+            </div>
+
+            <div class="form-content">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('order')">Informations Commande</button>
+                    <button class="tab" onclick="switchTab('customer')">Localisation Client</button>
+                    <button class="tab" onclick="switchTab('delivery')">Livraison & Paiement</button>
+                    <button class="tab" onclick="switchTab('review')">Évaluation</button>
+                </div>
+
+                <form id="predictionForm">
+                    <!-- Order Information Tab -->
+                    <div id="order" class="tab-content active">
+                        <div class="form-section">
+                            <div class="section-title">Informations de Commande</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>ID Commande</label>
+                                    <input type="text" name="order_id" placeholder="ex: abc123" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>ID Client Unique</label>
+                                    <input type="text" name="customer_unique_id" placeholder="ex: cust456" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Statut Commande</label>
+                                    <select name="order_status" required>
+                                        <option value="">-- Sélectionner --</option>
+                                        <option value="delivered">Livrée</option>
+                                        <option value="shipped">Expédiée</option>
+                                        <option value="processing">En cours</option>
+                                        <option value="canceled">Annulée</option>
+                                        <option value="unavailable">Indisponible</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Date Achat</label>
+                                    <div class="hint">Format: YYYY-MM-DD HH:MM:SS</div>
+                                    <input type="text" name="order_purchase_timestamp" placeholder="2024-05-15 14:30:00" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Montant de Paiement (BRL)</label>
+                                    <input type="number" name="payment_value" step="0.01" placeholder="150.50" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Prix Produit (BRL)</label>
+                                    <input type="number" name="price" step="0.01" placeholder="100.00">
+                                </div>
+                                <div class="form-group">
+                                    <label>Catégorie Produit</label>
+                                    <input type="text" name="super_categorie" placeholder="ex: electronics">
+                                </div>
+                                <div class="form-group">
+                                    <label>Frais de Port (BRL)</label>
+                                    <input type="number" name="freight_value" step="0.01" placeholder="10.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <div class="section-title">Détails de Paiement</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Nombre de Versements</label>
+                                    <input type="number" name="payment_installments" min="1" placeholder="1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Date Approbation</label>
+                                    <div class="hint">Format: YYYY-MM-DD HH:MM:SS</div>
+                                    <input type="text" name="order_approved_at" placeholder="2024-05-15 14:35:00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Customer Location Tab -->
+                    <div id="customer" class="tab-content">
+                        <div class="form-section">
+                            <div class="section-title">Localisation du Client</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Latitude</label>
+                                    <input type="number" name="customer_lat" step="0.0001" placeholder="-23.5505">
+                                </div>
+                                <div class="form-group">
+                                    <label>Longitude</label>
+                                    <input type="number" name="customer_lng" step="0.0001" placeholder="-46.6333">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Delivery Tab -->
+                    <div id="delivery" class="tab-content">
+                        <div class="form-section">
+                            <div class="section-title">Informations de Livraison</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Date Livraison Estimée</label>
+                                    <div class="hint">Format: YYYY-MM-DD HH:MM:SS</div>
+                                    <input type="text" name="order_estimated_delivery_date" placeholder="2024-05-20 23:59:59">
+                                </div>
+                                <div class="form-group">
+                                    <label>Date Livraison Réelle</label>
+                                    <div class="hint">Format: YYYY-MM-DD HH:MM:SS</div>
+                                    <input type="text" name="order_delivered_customer_date" placeholder="2024-05-18 10:00:00">
+                                </div>
+                                <div class="form-group">
+                                    <label>Date Livraison Transporteur</label>
+                                    <div class="hint">Format: YYYY-MM-DD HH:MM:SS</div>
+                                    <input type="text" name="order_delivered_carrier_date" placeholder="2024-05-17 08:00:00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Review Tab -->
+                    <div id="review" class="tab-content">
+                        <div class="form-section">
+                            <div class="section-title">Évaluation Client</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Note (1-5)</label>
+                                    <select name="review_score">
+                                        <option value="">-- Pas d'avis --</option>
+                                        <option value="1">1 ⭐ Très mauvais</option>
+                                        <option value="2">2 ⭐⭐ Mauvais</option>
+                                        <option value="3">3 ⭐⭐⭐ Moyen</option>
+                                        <option value="4">4 ⭐⭐⭐⭐ Bon</option>
+                                        <option value="5">5 ⭐⭐⭐⭐⭐ Excellent</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Date Avis</label>
+                                    <div class="hint">Format: YYYY-MM-DD HH:MM:SS</div>
+                                    <input type="text" name="review_creation_date" placeholder="2024-05-22 15:30:00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Button Group -->
+                    <div class="button-group">
+                        <button type="reset" class="btn-secondary">Réinitialiser</button>
+                        <button type="button" class="btn-secondary" onclick="loadExample()" style="background-color: #f0f4f8; color: #0066cc; border: 2px solid #0066cc;">📋 Charger Exemple</button>
+                        <button type="submit" class="btn-primary">🚀 Prédire le Segment</button>
+                    </div>
+                </form>
+
+                <!-- Loading -->
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Analyse en cours...</p>
+                </div>
+
+                <!-- Error Message -->
+                <div class="error-message" id="errorMessage"></div>
+
+                <!-- Results -->
+                <div class="result-section" id="resultSection">
+                    <div class="success-badge" id="successMessage"></div>
+                    <div class="result-header">Résultats de Segmentation</div>
+                    <div class="result-item">
+                        <span class="result-label">Client ID:</span>
+                        <span class="result-value" id="resultCustomerId">-</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Cluster:</span>
+                        <span class="result-value" id="resultCluster">-</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Segment:</span>
+                        <div>
+                            <span class="segment-badge" id="resultSegment">-</span>
+                        </div>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Action Recommandée:</span>
+                        <span class="result-value" id="resultAction">-</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Confiance:</span>
+                        <div style="flex: 1;">
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" id="confidenceFill"></div>
+                            </div>
+                            <span id="confidencePercent">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Form submission
+        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(document.getElementById('predictionForm'));
+            const orders = [Object.fromEntries(formData)];
+
+            // Convert empty values to null
+            orders[0] = Object.fromEntries(
+                Object.entries(orders[0]).map(([k, v]) => [k, v === '' ? null : v])
+            );
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('errorMessage').classList.remove('show');
+            document.getElementById('resultSection').classList.remove('show');
+
+            try {
+                const response = await fetch('/predict-raw', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ orders: [orders[0]] })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Erreur de prédiction');
+                }
+
+                const result = await response.json();
+
+                // Display results
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('resultSection').classList.add('show');
+                document.getElementById('successMessage').textContent = '✓ Prédiction réussie!';
+                document.getElementById('resultCustomerId').textContent = result.customer_id || '-';
+                document.getElementById('resultCluster').textContent = result.cluster;
+                document.getElementById('resultSegment').textContent = result.segment_name;
+                document.getElementById('resultAction').textContent = result.segment_action;
+
+                const confidence = (result.confidence * 100).toFixed(1);
+                document.getElementById('confidencePercent').textContent = confidence + '%';
+                document.getElementById('confidenceFill').style.width = confidence + '%';
+
+                // Scroll to results
+                document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('errorMessage').textContent = '❌ Erreur: ' + error.message;
+                document.getElementById('errorMessage').classList.add('show');
+            }
+        });
+
+        // Example data
+        function loadExample() {
+            const exampleData = {
+                order_id: 'ORDER-2024-001',
+                customer_unique_id: 'CUST-12345',
+                order_status: 'delivered',
+                order_purchase_timestamp: '2024-05-15 14:30:00',
+                payment_value: '250.50',
+                price: '200.00',
+                super_categorie: 'electronics',
+                freight_value: '15.00',
+                payment_installments: '2',
+                order_approved_at: '2024-05-15 14:35:00',
+                customer_lat: '-23.5505',
+                customer_lng: '-46.6333',
+                order_estimated_delivery_date: '2024-05-20 23:59:59',
+                order_delivered_customer_date: '2024-05-18 10:00:00',
+                order_delivered_carrier_date: '2024-05-17 08:00:00',
+                review_score: '5',
+                review_creation_date: '2024-05-22 15:30:00'
+            };
+
+            Object.entries(exampleData).forEach(([key, value]) => {
+                const input = document.querySelector(`[name="${key}"]`);
+                if (input) input.value = value;
+            });
+        }
+    </script>
+</body>
+</html>
