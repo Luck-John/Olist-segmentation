@@ -918,26 +918,41 @@
             }
         });
 
-        // Example data - improved with date/time
+        // Example data - complete with all date/time fields separated
         function loadExample() {
             const exampleData = {
+                // Order Information
                 order_id: 'ORDER-2024-001',
                 customer_unique_id: 'CUST-12345',
                 order_status: 'delivered',
-                order_purchase_timestamp: '2024-05-15 14:30:00',
+                order_purchase_date: '2024-05-15',
+                order_purchase_time: '14:30',
                 payment_value: '250.50',
                 price: '200.00',
                 super_categorie: 'electronics',
                 freight_value: '15.00',
+                
+                // Payment Details
                 payment_installments: '2',
-                order_approved_at: '2024-05-15 14:35:00',
+                order_approved_date: '2024-05-15',
+                order_approved_time: '14:35',
+                
+                // Customer Location
                 customer_lat: '-23.5505',
                 customer_lng: '-46.6333',
-                order_estimated_delivery_date: '2024-05-20 23:59:59',
-                order_delivered_customer_date: '2024-05-18 10:00:00',
-                order_delivered_carrier_date: '2024-05-17 08:00:00',
+                
+                // Delivery Information
+                order_estimated_delivery_date: '2024-05-20',
+                order_estimated_delivery_time: '23:59',
+                order_delivered_customer_date: '2024-05-18',
+                order_delivered_customer_time: '10:00',
+                order_delivered_carrier_date: '2024-05-17',
+                order_delivered_carrier_time: '08:00',
+                
+                // Review Information
                 review_score: '5',
-                review_creation_date: '2024-05-22 15:30:00'
+                review_creation_date: '2024-05-22',
+                review_creation_time: '15:30'
             };
 
             Object.entries(exampleData).forEach(([key, value]) => {
