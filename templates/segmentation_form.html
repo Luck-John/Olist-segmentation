@@ -56,6 +56,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .spinner{display:inline-block;width:26px;height:26px;border:3px solid #dce8f5;border-top-color:#0066cc;border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .result-card{display:none;background:#fff;border:2px solid #0066cc;border-radius:12px;padding:1.6rem;margin-top:1rem}
+.result-card.error-state{border-color:#c0392b;background:#fff8f8}
+.error-card-title{color:#c0392b;font-size:1rem;font-weight:700;margin-bottom:.7rem;padding-bottom:.5rem;border-bottom:2px solid #f5c6c6}
+.error-card-msg{color:#7a1c10;font-size:.92rem;line-height:1.6;background:#fdecea;border:1px solid #f5c6c6;border-radius:8px;padding:.9rem 1rem}
+.error-tip{margin-top:.7rem;font-size:.83rem;color:#a04040;background:#fff0f0;border-left:3px solid #c0392b;padding:.6rem .8rem;border-radius:0 6px 6px 0}
 .result-card.show{display:block}
 .result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:.75rem;margin-bottom:1.1rem}
 .result-item{background:#f0f6ff;padding:.9rem;border-radius:8px;border-left:3px solid #0066cc;text-align:center}
@@ -126,6 +130,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="btn-group">
         <button class="btn btn-secondary" onclick="resetSmartForm()">Reinitialiser</button>
         <button class="btn btn-secondary" onclick="loadExample()">Charger un exemple</button>
+        <button class="btn btn-secondary" onclick="loadExampleDirect()" style="font-size:.83rem">Exemple ID client</button>
         <button class="btn btn-primary" onclick="submitSmart()">Predire</button>
       </div>
     </div>
@@ -157,43 +162,52 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <p style="margin-top:.6rem;color:#5a7a9a;font-size:.9rem">Analyse en cours...</p>
   </div>
 
-  <div class="info-banner error" id="errorBox"></div>
 
-  <!-- Result -->
+
+  <!-- Result / Error card (shared) -->
   <div class="result-card" id="resultCard">
-    <div class="card-title">Resultat de la prediction</div>
-    <div class="meta-info" id="metaInfo"></div>
-    <div class="segment-pill" id="rSegment">-</div>
-    <div class="result-grid">
-      <div class="result-item">
-        <div class="result-label">Cluster</div>
-        <div class="result-value" id="rCluster">-</div>
-      </div>
-      <div class="result-item">
-        <div class="result-label">Confiance</div>
-        <div class="result-value" id="rConf">-</div>
-        <div class="conf-bar"><div class="conf-fill" id="rConfBar" style="width:0%"></div></div>
-      </div>
-      <div class="result-item">
-        <div class="result-label">Commandes utilisees</div>
-        <div class="result-value" id="rNOrders">-</div>
-      </div>
-      <div class="result-item">
-        <div class="result-label">Client ID</div>
-        <div class="result-value" id="rCustId" style="font-size:.78rem;word-break:break-all">-</div>
-      </div>
+    <!-- Error state -->
+    <div id="errorContent" style="display:none">
+      <div class="error-card-title">Erreur</div>
+      <div class="error-card-msg" id="errorMsg"></div>
+      <div class="error-tip" id="errorTip"></div>
     </div>
-    <div class="action-box">
-      <div class="action-label">Action recommandee</div>
-      <div id="rAction" style="color:#155724;font-size:.95rem">-</div>
-    </div>
-    <div class="feats-title">Features calculees</div>
-    <div class="feats-grid">
-      <div class="feat"><div class="feat-name">Recency (j)</div><div class="feat-val" id="fRecency">-</div></div>
-      <div class="feat"><div class="feat-name">Review</div><div class="feat-val" id="fReview">-</div></div>
-      <div class="feat"><div class="feat-name">Livraison (j)</div><div class="feat-val" id="fDelivery">-</div></div>
-      <div class="feat"><div class="feat-name">Versements</div><div class="feat-val" id="fInstall">-</div></div>
-      <div class="feat"><div class="feat-name">CLV (BRL)</div><div class="feat-val" id="fClv">-</div></div>
+    <!-- Success state -->
+    <div id="successContent">
+      <div class="card-title">Resultat de la prediction</div>
+      <div class="meta-info" id="metaInfo"></div>
+      <div class="segment-pill" id="rSegment">-</div>
+      <div class="result-grid">
+        <div class="result-item">
+          <div class="result-label">Cluster</div>
+          <div class="result-value" id="rCluster">-</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Confiance</div>
+          <div class="result-value" id="rConf">-</div>
+          <div class="conf-bar"><div class="conf-fill" id="rConfBar" style="width:0%"></div></div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Commandes utilisees</div>
+          <div class="result-value" id="rNOrders">-</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Client ID</div>
+          <div class="result-value" id="rCustId" style="font-size:.78rem;word-break:break-all">-</div>
+        </div>
+      </div>
+      <div class="action-box">
+        <div class="action-label">Action recommandee</div>
+        <div id="rAction" style="color:#155724;font-size:.95rem">-</div>
+      </div>
+      <div class="feats-title">Features calculees</div>
+      <div class="feats-grid">
+        <div class="feat"><div class="feat-name">Recency (j)</div><div class="feat-val" id="fRecency">-</div></div>
+        <div class="feat"><div class="feat-name">Review</div><div class="feat-val" id="fReview">-</div></div>
+        <div class="feat"><div class="feat-name">Livraison (j)</div><div class="feat-val" id="fDelivery">-</div></div>
+        <div class="feat"><div class="feat-name">Versements</div><div class="feat-val" id="fInstall">-</div></div>
+        <div class="feat"><div class="feat-name">CLV (BRL)</div><div class="feat-val" id="fClv">-</div></div>
+      </div>
     </div>
   </div>
 
@@ -320,10 +334,19 @@ function collectOrders() {
 async function submitSmart() {
   const orders = collectOrders();
   const custId = document.getElementById('smartCustId').value.trim();
-  if (!orders.length && !custId) { showError('Ajoutez au moins une commande ou un ID client.'); return; }
+  if (!orders.length && !custId) {
+    showError('Ajoutez au moins une commande ou renseignez un ID client.', 'Vous pouvez aussi utiliser le bouton "Charger un exemple" pour voir un cas de demonstration.');
+    return;
+  }
   for (const o of orders) {
-    if (!o.order_purchase_timestamp) { showError('Renseignez la date d\'achat pour chaque commande.'); return; }
-    if (!o.payment_value) { showError('Renseignez le montant de paiement pour chaque commande.'); return; }
+    if (!o.order_purchase_timestamp) {
+      showError('La date d\'achat est manquante pour une commande.', 'Renseignez la date et l\'heure d\'achat pour chaque commande saisie.');
+      return;
+    }
+    if (!o.payment_value) {
+      showError('Le montant de paiement est manquant pour une commande.', 'Indiquez le montant total paye pour chaque commande.');
+      return;
+    }
   }
   await callPredict('/predict-smart', { customer_unique_id: custId||null, orders });
 }
@@ -331,16 +354,29 @@ async function submitSmart() {
 // ---- Submit direct ----
 async function submitDirect() {
   const id = document.getElementById('directCustId').value.trim();
-  if (!id) { showError('Entrez un ID client.'); return; }
+  if (!id) {
+    showError('Veuillez entrer un ID client.', 'L\'identifiant client (customer_unique_id) est un code hexadecimal de 32 caracteres. Utilisez le bouton "Exemple ID client" pour voir un exemple.');
+    return;
+  }
   clearError(); showLoading(true);
   try {
     const r = await fetch('/customer/'+encodeURIComponent(id)+'/predict');
     const d = await r.json();
-    if (!r.ok) throw new Error(d.detail||'Erreur API');
+    if (!r.ok) {
+      const tip = r.status === 404
+        ? 'Cet identifiant n\'existe pas dans la base de donnees. Verifiez l\'ID ou utilisez le Mode Commandes pour un nouveau client.'
+        : 'Verifiez que l\'API est bien disponible et reessayez.';
+      throw new Error(d.detail||'Erreur API');
+    }
     displayResult(d);
     document.getElementById('directStatus').innerHTML =
       '<span class="badge badge-existing">'+d.n_historical_orders+' commande(s) historiques utilisees</span>';
-  } catch(e) { showError(e.message); } finally { showLoading(false); }
+  } catch(e) {
+    const tip = e.message.includes('introuvable') || e.message.includes('not found')
+      ? 'Cet identifiant n\'existe pas dans la base de donnees. Verifiez l\'ID ou utilisez le Mode Commandes pour predire sans historique.'
+      : null;
+    showError(e.message, tip);
+  } finally { showLoading(false); }
 }
 
 async function callPredict(url, body) {
@@ -348,9 +384,17 @@ async function callPredict(url, body) {
   try {
     const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
     const d = await r.json();
-    if (!r.ok) throw new Error(d.detail||'Erreur API');
+    if (!r.ok) {
+      const tip = r.status === 404
+        ? 'Client non trouve en base. Pour predire sans historique, laissez l\'ID client vide.'
+        : r.status === 422
+        ? 'Verifiez que tous les champs obligatoires sont correctement remplis.'
+        : null;
+      showError(d.detail||'Erreur API', tip);
+      return;
+    }
     displayResult(d);
-  } catch(e) { showError(e.message); } finally { showLoading(false); }
+  } catch(e) { showError(e.message, 'Verifiez votre connexion et que l\'API est disponible.'); } finally { showLoading(false); }
 }
 
 function displayResult(d) {
@@ -392,31 +436,98 @@ function resetSmartForm() {
   isExistingCustomer=false; clearError(); hideResult();
 }
 
+// ---- Varied examples ----
+const EXAMPLES = [
+  {
+    label: 'Client fidele multi-commandes',
+    orders: [
+      { order_id:'ORD-A1', days_ago:310, payment:320.00, install:6, delivery_lag:8, review:5 },
+      { order_id:'ORD-A2', days_ago:200, payment:185.50, install:3, delivery_lag:10, review:4 },
+      { order_id:'ORD-A3', days_ago:90,  payment:430.00, install:8, delivery_lag:7, review:5 }
+    ]
+  },
+  {
+    label: 'Client insatisfait commande unique',
+    orders: [
+      { order_id:'ORD-B1', days_ago:60, payment:52.90, install:1, delivery_lag:22, review:1 }
+    ]
+  },
+  {
+    label: 'Client recents deux achats',
+    orders: [
+      { order_id:'ORD-C1', days_ago:40, payment:99.00,  install:2, delivery_lag:9,  review:4 },
+      { order_id:'ORD-C2', days_ago:15, payment:145.00, install:3, delivery_lag:11, review:3 }
+    ]
+  },
+  {
+    label: 'Client premium gros panier',
+    orders: [
+      { order_id:'ORD-D1', days_ago:180, payment:890.00, install:10, delivery_lag:6, review:5 },
+      { order_id:'ORD-D2', days_ago:80,  payment:650.00, install:8,  delivery_lag:5, review:5 }
+    ]
+  },
+  {
+    label: 'Client inactif ancienne commande',
+    orders: [
+      { order_id:'ORD-E1', days_ago:480, payment:78.50, install:1, delivery_lag:15, review:3 }
+    ]
+  }
+];
+let exampleIdx = 0;
+
 function loadExample() {
   resetSmartForm();
+  const ex = EXAMPLES[exampleIdx % EXAMPLES.length];
+  exampleIdx++;
   const sub = d => { const dt=new Date(); dt.setDate(dt.getDate()-d); return dt.toISOString().split('T')[0]; };
-  addOrder({
-    order_id: 'ORD-EX-001',
-    order_purchase_timestamp: sub(120)+' 09:30:00',
-    payment_value: 247.80,
-    payment_installments: 4,
-    order_delivered_customer_date: sub(113)+' 15:00:00',
-    review_score: 4
-  });
-  addOrder({
-    order_id: 'ORD-EX-002',
-    order_purchase_timestamp: sub(45)+' 14:10:00',
-    payment_value: 89.90,
-    payment_installments: 1,
-    order_delivered_customer_date: sub(39)+' 10:30:00',
-    review_score: 5
+  ex.orders.forEach(o => {
+    addOrder({
+      order_id: o.order_id,
+      order_purchase_timestamp: sub(o.days_ago) + ' 10:00:00',
+      payment_value: o.payment,
+      payment_installments: o.install,
+      order_delivered_customer_date: sub(o.days_ago - o.delivery_lag) + ' 14:00:00',
+      review_score: o.review
+    });
   });
 }
 
+// ---- Example IDs for direct mode ----
+const EXAMPLE_IDS = [
+  '00172711b30d52eea8b313a7f2cced02',
+  '004288347e5e88a27ded2bb23747066c',
+  '004b45ec5c64187465168251cd1c9c2f',
+  '0058f300f57d7b93c477a131a59b36c3',
+  '0000366f3b9a7992bf8c76cfdf3221e2'
+];
+let exIdIdx = 0;
+function loadExampleDirect() {
+  document.getElementById('smartCustId').value = EXAMPLE_IDS[exIdIdx % EXAMPLE_IDS.length];
+  exIdIdx++;
+}
+
 function showLoading(v){document.getElementById('loading').style.display=v?'block':'none';}
-function showError(msg){const e=document.getElementById('errorBox');e.textContent='Erreur : '+msg;e.classList.add('show');}
-function clearError(){document.getElementById('errorBox').classList.remove('show');}
-function hideResult(){document.getElementById('resultCard').classList.remove('show');}
+
+function showError(msg, tip) {
+  const card = document.getElementById('resultCard');
+  card.classList.add('show','error-state');
+  document.getElementById('errorContent').style.display='block';
+  document.getElementById('successContent').style.display='none';
+  document.getElementById('errorMsg').textContent = msg;
+  const tipEl = document.getElementById('errorTip');
+  if (tip) { tipEl.textContent = tip; tipEl.style.display='block'; }
+  else { tipEl.style.display='none'; }
+  card.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function clearError() {
+  const card = document.getElementById('resultCard');
+  card.classList.remove('error-state');
+  document.getElementById('errorContent').style.display='none';
+  document.getElementById('successContent').style.display='block';
+}
+
+function hideResult(){document.getElementById('resultCard').classList.remove('show','error-state');}
 
 // Init
 addOrder();
