@@ -53,7 +53,7 @@ def main():
         sys.executable, "-m", "uvicorn",
         "scripts.api:app",
         "--host", host,
-        "--port", port,
+        "--port", str(port),
         "--proxy-headers",
         "--forwarded-allow-ips=*",
         "--reload",

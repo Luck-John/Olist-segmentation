@@ -16,188 +16,95 @@
             background: linear-gradient(135deg, #f0f4f8 0%, #e8f1f9 100%);
             color: #1a3a52;
             line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem 1rem;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 2rem;
         }
 
-        /* Header with Logo */
         .header {
             background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
             color: white;
-            padding: 2rem 2rem;
+            padding: 2rem;
             border-radius: 12px;
             margin-bottom: 2rem;
             box-shadow: 0 4px 15px rgba(0, 102, 204, 0.2);
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            justify-content: space-between;
+            text-align: center;
         }
 
-        .olist-logo {
-            width: 80px;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 10px;
+        .header h1 {
             font-size: 2rem;
-            font-weight: bold;
-        }
-
-        .header-text h1 {
-            font-size: 2rem;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.5rem;
             font-weight: 700;
         }
 
-        .header-text p {
+        .header p {
             font-size: 0.95rem;
             opacity: 0.95;
         }
 
-        .header-text {
-            flex: 1;
-            text-align: left;
-        }
-
-        .header-text img {
-            height: 40px;
-            width: auto;
-            display: block;
-            margin-bottom: 0.5rem;
-            order: 2;
-        }
-
-        .header-logo {
-            order: 3;
-            display: flex;
-            align-items: center;
-        }
-
-        /* Form container */
-        .form-container {
+        .card {
             background: white;
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
+            padding: 2rem;
+            margin-bottom: 2rem;
         }
 
-        /* Form header */
-        .form-header {
-            background: #f8fbff;
-            border-bottom: 2px solid #0066cc;
-            padding: 1.5rem;
-        }
-
-        .form-header h2 {
+        .card-title {
             color: #0066cc;
-            font-size: 1.5rem;
-            margin-bottom: 0.3rem;
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
         }
 
-        .form-header p {
-            color: #666;
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: #1a3a52;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
             font-size: 0.95rem;
         }
 
-        /* Form content */
-        .form-content {
-            padding: 2rem;
+        .form-group label .required {
+            color: #c00;
         }
 
-        /* Sections */
-        .form-section {
-            margin-bottom: 2rem;
-            padding-bottom: 2rem;
-            border-bottom: 1px solid #e0e8f0;
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
         }
 
-        .form-section:last-child {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
         }
 
-        .section-title {
-            color: #0066cc;
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .section-title::before {
-            content: '';
-            width: 4px;
-            height: 24px;
-            background: linear-gradient(135deg, #0066cc, #0052a3);
-            border-radius: 2px;
-        }
-
-        /* Form grid */
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1.5rem;
         }
 
-        /* Form group */
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group label {
-            color: #1a3a52;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
-        }
-
-        .form-group .hint {
-            font-size: 0.8rem;
-            color: #999;
-            margin-bottom: 0.3rem;
-            font-style: italic;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            padding: 0.75rem;
-            border: 2px solid #e0e8f0;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            font-family: inherit;
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #0066cc;
-            background-color: #f8fbff;
-            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
-        }
-
-        .form-group input::placeholder {
-            color: #aaa;
-        }
-
-        /* Date/Time inputs */
         .datetime-group {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
+            gap: 0.5rem;
         }
 
         .datetime-group .form-group {
@@ -208,12 +115,10 @@
             font-size: 0.85rem;
         }
 
-        /* Buttons */
         .button-group {
             display: flex;
             gap: 1rem;
             margin-top: 2rem;
-            justify-content: center;
             flex-wrap: wrap;
         }
 
@@ -225,6 +130,8 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            flex: 1;
+            min-width: 140px;
         }
 
         .btn-primary {
@@ -240,7 +147,6 @@
 
         .btn-primary:active {
             transform: translateY(0);
-            box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
         }
 
         .btn-secondary {
@@ -253,7 +159,6 @@
             background: #e8f1f9;
         }
 
-        /* Loading state */
         .loading {
             display: none;
             text-align: center;
@@ -276,58 +181,74 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Result section */
+        .error-message {
+            display: none;
+            background: #fee;
+            color: #c00;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid #c00;
+            margin-bottom: 1rem;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            display: none;
+            background: #e8f8e8;
+            color: #006600;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid #00b366;
+            margin-bottom: 1rem;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
         .result-section {
             display: none;
             background: #f8fbff;
             border-left: 4px solid #0066cc;
             padding: 1.5rem;
             border-radius: 6px;
-            margin-top: 2rem;
+            margin-top: 1.5rem;
         }
 
         .result-section.show {
             display: block;
         }
 
-        .result-header {
-            color: #0066cc;
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            border-bottom: 2px solid #0066cc;
-            padding-bottom: 0.5rem;
-        }
-
-        /* Main Results */
-        .result-main {
-            margin-bottom: 1.5rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid #e0e8f0;
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
         }
 
         .result-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 0;
-        }
-
-        .result-item:last-child {
-            border-bottom: none;
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 3px solid #0066cc;
         }
 
         .result-label {
             color: #666;
+            font-size: 0.85rem;
             font-weight: 500;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
         }
 
         .result-value {
             color: #0066cc;
-            font-weight: 600;
+            font-size: 1.3rem;
+            font-weight: 700;
         }
 
-        /* Segment badge */
         .segment-badge {
             display: inline-block;
             padding: 0.5rem 1rem;
@@ -338,162 +259,45 @@
             font-weight: 600;
         }
 
-        /* Features Grid */
         .features-section {
             margin-top: 1.5rem;
+            background: #f0f4f8;
+            padding: 1rem;
+            border-radius: 6px;
         }
 
         .features-title {
             color: #0066cc;
-            font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 1rem;
-            padding: 0.75rem;
-            background: #e8f1f9;
-            border-radius: 6px;
-            border-left: 4px solid #0066cc;
+            font-size: 0.95rem;
         }
 
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 0.75rem;
         }
 
-        .feature-card {
+        .feature-item {
             background: white;
-            border: 1px solid #e0e8f0;
-            border-radius: 6px;
             padding: 0.75rem;
+            border-radius: 4px;
             text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .feature-card:hover {
-            border-color: #0066cc;
-            box-shadow: 0 2px 8px rgba(0, 102, 204, 0.15);
+            border: 1px solid #ddd;
         }
 
         .feature-name {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: #666;
+            margin-bottom: 0.3rem;
             font-weight: 500;
-            margin-bottom: 0.5rem;
-            word-wrap: break-word;
         }
 
         .feature-value {
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             color: #0066cc;
-            font-weight: 600;
-        }
-
-        /* Error message */
-        .error-message {
-            display: none;
-            background: #fee;
-            color: #c00;
-            padding: 1rem;
-            border-radius: 6px;
-            margin-top: 1rem;
-            border-left: 4px solid #c00;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        /* Tabs */
-        .tabs {
-            display: flex;
-            gap: 0.25rem;
-            flex-wrap: wrap;
-            align-items: flex-end;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid #e0e8f0;
-            padding-bottom: 0;
-        }
-
-        .tab {
-            padding: 0.75rem 1.5rem;
-            background: none;
-            border: none;
-            color: #666;
-            font-weight: 600;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s ease;
-            margin-bottom: -2px;
-            border-radius: 6px 6px 0 0;
-            white-space: nowrap;
-            font-size: 0.9rem;
-            text-align: center;
-            min-width: fit-content;
-        }
-
-        .tab.active {
-            color: #0066cc;
-            border-bottom-color: #0066cc;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .datetime-group .form-group input {
-            width: 100%;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-
-            .header {
-                flex-direction: column;
-                text-align: center;
-                padding: 1.5rem 1rem;
-            }
-
-            .header h1 {
-                font-size: 1.6rem;
-            }
-
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .button-group {
-                flex-direction: column;
-            }
-
-            button {
-                width: 100%;
-            }
-
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .datetime-group {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Success message */
-        .success-badge {
-            background: linear-gradient(135deg, #00b366 0%, #008c4d 100%);
-            color: white;
-            padding: 1rem;
-            border-radius: 6px;
-            margin-bottom: 1rem;
-            text-align: center;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .confidence-bar {
@@ -510,286 +314,188 @@
             background: linear-gradient(90deg, #0066cc, #0052a3);
             transition: width 0.3s ease;
         }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .datetime-group {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header with Logo -->
+        <!-- Header -->
         <div class="header">
-            <div class="olist-logo">
-                <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="60" height="60" rx="8" fill="white" fill-opacity="0.1"/>
-                    <circle cx="15" cy="15" r="5" fill="white"/>
-                    <circle cx="45" cy="15" r="5" fill="white"/>
-                    <circle cx="30" cy="30" r="5" fill="white"/>
-                    <circle cx="15" cy="45" r="5" fill="white"/>
-                    <circle cx="45" cy="45" r="5" fill="white"/>
-                    <line x1="15" y1="20" x2="15" y2="40" stroke="white" stroke-width="1.5" stroke-opacity="0.6"/>
-                    <line x1="20" y1="15" x2="40" y2="15" stroke="white" stroke-width="1.5" stroke-opacity="0.6"/>
-                    <line x1="45" y1="20" x2="45" y2="40" stroke="white" stroke-width="1.5" stroke-opacity="0.6"/>
-                </svg>
-            </div>
-            <div class="header-text">
-                <h1>Segmentation Clients Olist</h1>
-                <p>Analysez et catégorisez les clients en fonction de leurs comportements d'achat</p>
-            </div>
-            <div class="header-logo">
-                <img src="/static/olist.png" alt="Olist" style="height: 40px; width: auto;">
-            </div>
+            <h1>Segmentation Clients Olist</h1>
+            <p>Prédisez le segment client en fonction de ses commandes</p>
         </div>
 
-        <!-- Form -->
-        <div class="form-container">
-            <div class="form-header">
-                <h2>Saisie des Données Client</h2>
-                <p>Remplissez les informations de commande pour prédire le segment client</p>
+        <!-- Form Card -->
+        <div class="card">
+            <h2 class="card-title">Enregistrer une Commande Client</h2>
+            
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyse en cours...</p>
             </div>
 
-            <div class="form-content">
-                <!-- Tabs -->
-                <div class="tabs">
-                    <button class="tab active" type="button" onclick="switchTab('order', this)">Informations Commande</button>
-                    <button class="tab" type="button" onclick="switchTab('customer', this)">Localisation Client</button>
-                    <button class="tab" type="button" onclick="switchTab('delivery', this)">Livraison et Paiement</button>
-                    <button class="tab" type="button" onclick="switchTab('review', this)">Evaluation</button>
+            <form id="predictionForm">
+                <div class="form-grid">
+                    <!-- Order ID -->
+                    <div class="form-group">
+                        <label>ID Commande <span class="required">*</span></label>
+                        <input type="text" name="order_id" placeholder="ex: ORD-001" required>
+                    </div>
+
+                    <!-- Customer ID -->
+                    <div class="form-group">
+                        <label>ID Client <span class="required">*</span></label>
+                        <input type="text" name="customer_unique_id" placeholder="ex: CUST-001" required>
+                    </div>
+
+                    <!-- Order Status -->
+                    <div class="form-group">
+                        <label>Statut Commande <span class="required">*</span></label>
+                        <select name="order_status" required>
+                            <option value="">-- Sélectionner --</option>
+                            <option value="delivered">Livré</option>
+                            <option value="shipped">Expédié</option>
+                            <option value="processing">En cours</option>
+                            <option value="canceled">Annulé</option>
+                        </select>
+                    </div>
+
+                    <!-- Purchase Date & Time -->
+                    <div class="form-group">
+                        <label>Date d'Achat <span class="required">*</span></label>
+                        <div class="datetime-group">
+                            <input type="date" name="order_purchase_date" required>
+                            <input type="time" name="order_purchase_time" required>
+                        </div>
+                    </div>
+
+                    <!-- Payment Value -->
+                    <div class="form-group">
+                        <label>Montant de Paiement (BRL) <span class="required">*</span></label>
+                        <input type="number" name="payment_value" step="0.01" placeholder="ex: 50.00" required>
+                    </div>
+
+                    <!-- Payment Installments -->
+                    <div class="form-group">
+                        <label>Nombre de Versements</label>
+                        <input type="number" name="payment_installments" min="1" step="1" placeholder="ex: 2">
+                    </div>
+
+                    <!-- Delivery Date (Optional) -->
+                    <div class="form-group">
+                        <label>Date de Livraison</label>
+                        <div class="datetime-group">
+                            <input type="date" name="order_delivered_customer_date">
+                            <input type="time" name="order_delivered_customer_time">
+                        </div>
+                    </div>
+
+                    <!-- Review Score (Optional) -->
+                    <div class="form-group">
+                        <label>Note (1-5)</label>
+                        <select name="review_score">
+                            <option value="">-- Pas d'avis --</option>
+                            <option value="1">1 - Très mauvais</option>
+                            <option value="2">2 - Mauvais</option>
+                            <option value="3">3 - Moyen</option>
+                            <option value="4">4 - Bon</option>
+                            <option value="5">5 - Excellent</option>
+                        </select>
+                    </div>
                 </div>
 
-                <form id="predictionForm">
-                    <!-- Order Information Tab -->
-                    <div id="order" class="tab-content active">
-                        <div class="form-section">
-                            <div class="section-title">Informations de Commande</div>
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label>ID Commande *</label>
-                                    <input type="text" name="order_id" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>ID Client Unique *</label>
-                                    <input type="text" name="customer_unique_id" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Statut Commande *</label>
-                                    <select name="order_status" required>
-                                        <option value="">-- Sélectionner --</option>
-                                        <option value="delivered">Livré</option>
-                                        <option value="shipped">Expédié</option>
-                                        <option value="processing">En cours</option>
-                                        <option value="canceled">Annulé</option>
-                                        <option value="unavailable">Indisponible</option>
-                                        <option value="invoiced">Facturé</option>
-                                        <option value="processing">En préparation</option>
-                                        <option value="approved">Approuvé</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Date et Heure d'Achat *</label>
-                                    <div class="datetime-group">
-                                        <div class="form-group">
-                                            <input type="date" name="order_purchase_date" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <input type="time" name="order_purchase_time" required>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label>Montant de Paiement (BRL) *</label>
-                                    <input type="number" name="payment_value" step="0.01" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Prix Produit (BRL)</label>
-                                    <input type="number" name="price" step="0.01">
-                                </div>
-                                <div class="form-group">
-                                    <label>Catégorie Produit *</label>
-                                    <select name="super_categorie" required>
-                                        <option value="">-- Sélectionner --</option>
-                                        <!-- HOME & FURNITURE -->
-                                        <option value="home">Maison & Mobilier</option>
-                                        <!-- APPLIANCES -->
-                                        <option value="appliances">Appareils Ménagers</option>
-                                        <!-- CONSTRUCTION & DIY -->
-                                        <option value="construction">Construction & Bricolage</option>
-                                        <!-- OFFICE & B2B -->
-                                        <option value="office">Bureau & B2B</option>
-                                        <!-- ELECTRONICS & TECH -->
-                                        <option value="electronics">Électronique & Tech</option>
-                                        <!-- FASHION & ACCESSORIES -->
-                                        <option value="fashion">Mode & Accessoires</option>
-                                        <!-- HEALTH, BEAUTY & BABY -->
-                                        <option value="health_beauty">Santé & Beauté</option>
-                                        <!-- AUTRES -->
-                                        <option value="sports_leisure">Sports & Loisirs</option>
-                                        <option value="arts">Arts & Culture</option>
-                                        <option value="other">Autres</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Frais de Port (BRL)</label>
-                                    <input type="number" name="freight_value" step="0.01">
-                                </div>
-                            </div>
-                        </div>
+                <!-- Buttons -->
+                <div class="button-group">
+                    <button type="reset" class="btn-secondary">Réinitialiser</button>
+                    <button type="button" class="btn-secondary" onclick="loadRandomExample()">Charger Exemple</button>
+                    <button type="submit" class="btn-primary">Prédire le Segment</button>
+                </div>
+            </form>
 
-                        <div class="form-section">
-                            <div class="section-title">Détails de Paiement</div>
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label>Nombre de Versements</label>
-                                    <input type="number" name="payment_installments" min="1">
-                                </div>
-                                <div class="form-group">
-                                    <label>Date et Heure d'Approbation</label>
-                                    <div class="datetime-group">
-                                        <div class="form-group">
-                                            <input type="date" name="order_approved_date">
-                                        </div>
-                                        <div class="form-group">
-                                            <input type="time" name="order_approved_time">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+            <!-- Results -->
+            <div class="result-section" id="resultSection">
+                <h2 class="card-title">Résultats</h2>
+                
+                <div class="result-grid">
+                    <div class="result-item">
+                        <div class="result-label">Client ID</div>
+                        <div class="result-value" id="resultCustomerId">-</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Cluster</div>
+                        <div class="result-value" id="resultCluster">-</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Confiance</div>
+                        <div class="result-value" id="resultConfidence">-</div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" id="confidenceFill"></div>
                         </div>
                     </div>
-
-                    <!-- Customer Location Tab -->
-                    <div id="customer" class="tab-content">
-                        <div class="form-section">
-                            <div class="section-title">Localisation du Client</div>
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label>Latitude</label>
-                                    <input type="number" name="customer_lat" step="0.0001">
-                                </div>
-                                <div class="form-group">
-                                    <label>Longitude</label>
-                                    <input type="number" name="customer_lng" step="0.0001">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Delivery Tab -->
-                    <div id="delivery" class="tab-content">
-                        <div class="form-section">
-                            <div class="section-title">Informations de Livraison</div>
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label>Date Livraison Estimée</label>
-                                    <div class="datetime-group">
-                                        <div class="form-group">
-                                            <input type="date" name="order_estimated_delivery_date">
-                                        </div>
-                                        <div class="form-group">
-                                            <input type="time" name="order_estimated_delivery_time">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label>Date Livraison Réelle</label>
-                                    <div class="datetime-group">
-                                        <div class="form-group">
-                                            <input type="date" name="order_delivered_customer_date">
-                                        </div>
-                                        <div class="form-group">
-                                            <input type="time" name="order_delivered_customer_time">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label>Date Livraison Transporteur</label>
-                                    <div class="datetime-group">
-                                        <div class="form-group">
-                                            <input type="date" name="order_delivered_carrier_date">
-                                        </div>
-                                        <div class="form-group">
-                                            <input type="time" name="order_delivered_carrier_time">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Review Tab -->
-                    <div id="review" class="tab-content">
-                        <div class="form-section">
-                            <div class="section-title">Évaluation Client</div>
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label>Note (1-5)</label>
-                                    <select name="review_score">
-                                        <option value="">-- Pas d'avis --</option>
-                                        <option value="1">1 ⭐ Très mauvais</option>
-                                        <option value="2">2 ⭐⭐ Mauvais</option>
-                                        <option value="3">3 ⭐⭐⭐ Moyen</option>
-                                        <option value="4">4 ⭐⭐⭐⭐ Bon</option>
-                                        <option value="5">5 ⭐⭐⭐⭐⭐ Excellent</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Date Avis</label>
-                                    <div class="datetime-group">
-                                        <div class="form-group">
-                                            <input type="date" name="review_creation_date">
-                                        </div>
-                                        <div class="form-group">
-                                            <input type="time" name="review_creation_time">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Button Group -->
-                    <div class="button-group">
-                        <button type="reset" class="btn-secondary">Réinitialiser</button>
-                        <button type="button" class="btn-secondary" onclick="loadExample()" style="background-color: #f0f4f8; color: #0066cc; border: 2px solid #0066cc;">Charger Exemple</button>
-                        <button type="submit" class="btn-primary">Predire le Segment</button>
-                    </div>
-                </form>
-
-                <!-- Loading -->
-                <div class="loading" id="loading">
-                    <div class="spinner"></div>
-                    <p>Analyse en cours...</p>
                 </div>
 
-                <!-- Error Message -->
-                <div class="error-message" id="errorMessage"></div>
+                <div style="margin-top: 1rem;">
+                    <span class="segment-badge" id="resultSegment">-</span>
+                </div>
 
-                <!-- Results -->
-                <div class="result-section" id="resultSection">
-                    <div class="success-badge" id="successMessage"></div>
-                    <div class="result-header">Résultats de Segmentation</div>
-                    <div class="result-item">
-                        <span class="result-label">Client ID:</span>
-                        <span class="result-value" id="resultCustomerId">-</span>
-                    </div>
-                    <div class="result-item">
-                        <span class="result-label">Cluster:</span>
-                        <span class="result-value" id="resultCluster">-</span>
-                    </div>
-                    <div class="result-item">
-                        <span class="result-label">Segment:</span>
-                        <div>
-                            <span class="segment-badge" id="resultSegment">-</span>
+                <div style="margin-top: 1rem;">
+                    <div class="result-label">Action Recommandée</div>
+                    <div class="result-value" id="resultAction" style="font-size: 1rem; color: #666;">-</div>
+                </div>
+
+                <!-- Engineered Features -->
+                <div class="features-section">
+                    <div class="features-grid">
+                        <div class="feature-item">
+                            <div class="feature-name">Recency (j)</div>
+                            <div class="feature-value" id="feat_recency">-</div>
                         </div>
-                    </div>
-                    <div class="result-item">
-                        <span class="result-label">Action Recommandée:</span>
-                        <span class="result-value" id="resultAction">-</span>
-                    </div>
-                    <div class="result-item">
-                        <span class="result-label">Confiance:</span>
-                        <div style="flex: 1;">
-                            <div class="confidence-bar">
-                                <div class="confidence-fill" id="confidenceFill"></div>
-                            </div>
-                            <span id="confidencePercent">0%</span>
+                        <div class="feature-item">
+                            <div class="feature-name">Review Score</div>
+                            <div class="feature-value" id="feat_review">-</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-name">Delivery (j)</div>
+                            <div class="feature-value" id="feat_delivery">-</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-name">Installments</div>
+                            <div class="feature-value" id="feat_installments">-</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-name">CLV (BRL)</div>
+                            <div class="feature-value" id="feat_clv">-</div>
                         </div>
                     </div>
                 </div>
@@ -798,290 +504,192 @@
     </div>
 
     <script>
-        // Tab switching
-        function switchTab(tabName, btn) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
-            if (btn) btn.classList.add('active');
+        const API_URL = '/predict-raw';
+
+        // Helper: Subtract days from date
+        function subtractDays(date, days) {
+            const result = new Date(date);
+            result.setDate(result.getDate() - days);
+            return result.toISOString().split('T')[0];
         }
 
-        // Reset form and clear results
-        document.getElementById('predictionForm').addEventListener('reset', (e) => {
-            // Hide result section
-            document.getElementById('resultSection').classList.remove('show');
-            // Hide error message
+        // Helper: Generate unique ID
+        function generateId() {
+            return Math.random().toString(36).substr(2, 9).toUpperCase();
+        }
+
+        // Example data - WITHOUT cluster labels (blind testing)
+        const examples = [
+            {
+                order_id: 'ORD-' + generateId(),
+                customer_unique_id: 'CUST-' + generateId(),
+                order_status: 'delivered',
+                order_purchase_date: subtractDays(new Date(), 150),
+                order_purchase_time: '10:00',
+                payment_value: '2.50',
+                payment_installments: '2',
+                order_delivered_customer_date: subtractDays(new Date(), 145),
+                order_delivered_customer_time: '14:00',
+                review_score: '4'
+            },
+            {
+                order_id: 'ORD-' + generateId(),
+                customer_unique_id: 'CUST-' + generateId(),
+                order_status: 'delivered',
+                order_purchase_date: subtractDays(new Date(), 80),
+                order_purchase_time: '14:30',
+                payment_value: '1.20',
+                payment_installments: '1',
+                order_delivered_customer_date: subtractDays(new Date(), 75),
+                order_delivered_customer_time: '10:00',
+                review_score: '5'
+            },
+            {
+                order_id: 'ORD-' + generateId(),
+                customer_unique_id: 'CUST-' + generateId(),
+                order_status: 'delivered',
+                order_purchase_date: subtractDays(new Date(), 300),
+                order_purchase_time: '09:15',
+                payment_value: '3.75',
+                payment_installments: '3',
+                order_delivered_customer_date: subtractDays(new Date(), 295),
+                order_delivered_customer_time: '12:00',
+                review_score: '3'
+            },
+            {
+                order_id: 'ORD-' + generateId(),
+                customer_unique_id: 'CUST-' + generateId(),
+                order_status: 'delivered',
+                order_purchase_date: subtractDays(new Date(), 30),
+                order_purchase_time: '16:45',
+                payment_value: '0.85',
+                payment_installments: '1',
+                order_delivered_customer_date: subtractDays(new Date(), 25),
+                order_delivered_customer_time: '18:30',
+                review_score: '2'
+            },
+            {
+                order_id: 'ORD-' + generateId(),
+                customer_unique_id: 'CUST-' + generateId(),
+                order_status: 'delivered',
+                order_purchase_date: subtractDays(new Date(), 200),
+                order_purchase_time: '11:20',
+                payment_value: '6.00',
+                payment_installments: '4',
+                order_delivered_customer_date: subtractDays(new Date(), 190),
+                order_delivered_customer_time: '15:45',
+                review_score: '4'
+            }
+        ];
+
+        // Load random example
+        function loadRandomExample() {
+            const example = examples[Math.floor(Math.random() * examples.length)];
+            const form = document.getElementById('predictionForm');
+            
+            form.reset();
+            Object.keys(example).forEach(key => {
+                const input = form.querySelector(`[name="${key}"]`);
+                if (input) {
+                    input.value = example[key];
+                }
+            });
+
+            clearMessages();
+        }
+
+        // Clear messages
+        function clearMessages() {
             document.getElementById('errorMessage').classList.remove('show');
-            // Hide loading
-            document.getElementById('loading').style.display = 'none';
-        });
+            document.getElementById('successMessage').classList.remove('show');
+            document.getElementById('resultSection').classList.remove('show');
+        }
 
         // Form submission
         document.getElementById('predictionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            clearMessages();
+            document.getElementById('loading').style.display = 'block';
+
             const formData = new FormData(document.getElementById('predictionForm'));
-            let data = Object.fromEntries(formData);
-            
-            // Combine date and time fields for delivery dates
-            if (data.order_estimated_delivery_date && data.order_estimated_delivery_time) {
-                data.order_estimated_delivery_date = data.order_estimated_delivery_date + ' ' + data.order_estimated_delivery_time;
-                delete data.order_estimated_delivery_time;
-            }
-            if (data.order_delivered_customer_date && data.order_delivered_customer_time) {
-                data.order_delivered_customer_date = data.order_delivered_customer_date + ' ' + data.order_delivered_customer_time;
-                delete data.order_delivered_customer_time;
-            }
-            if (data.order_delivered_carrier_date && data.order_delivered_carrier_time) {
-                data.order_delivered_carrier_date = data.order_delivered_carrier_date + ' ' + data.order_delivered_carrier_time;
-                delete data.order_delivered_carrier_time;
-            }
-            
-            // Combine date and time for purchase and approval
+            const data = Object.fromEntries(formData);
+
+            // Combine date & time fields
             if (data.order_purchase_date && data.order_purchase_time) {
-                data.order_purchase_timestamp = data.order_purchase_date + ' ' + data.order_purchase_time;
+                data.order_purchase_timestamp = `${data.order_purchase_date}T${data.order_purchase_time}:00`;
                 delete data.order_purchase_date;
                 delete data.order_purchase_time;
             }
-            if (data.order_approved_date && data.order_approved_time) {
-                data.order_approved_at = data.order_approved_date + ' ' + data.order_approved_time;
-                delete data.order_approved_date;
-                delete data.order_approved_time;
-            }
-            // Combine date and time for review
-            if (data.review_creation_date && data.review_creation_time) {
-                data.review_creation_date = data.review_creation_date + ' ' + data.review_creation_time;
-                delete data.review_creation_time;
-            }
-            
-            const orders = [data];
-            orders[0] = Object.fromEntries(
-                Object.entries(orders[0]).map(([k, v]) => [k, v === '' ? null : v])
-            );
 
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('errorMessage').classList.remove('show');
-            document.getElementById('resultSection').classList.remove('show');
+            if (data.order_delivered_customer_date && data.order_delivered_customer_time) {
+                data.order_delivered_customer_date = `${data.order_delivered_customer_date}T${data.order_delivered_customer_time}:00`;
+                delete data.order_delivered_customer_time;
+            }
+
+            // Convert numeric fields
+            if (data.payment_value) data.payment_value = parseFloat(data.payment_value);
+            if (data.payment_installments) data.payment_installments = parseInt(data.payment_installments) || 1;
+            if (data.review_score) data.review_score = parseFloat(data.review_score);
+
+            // Remove empty optional fields
+            Object.keys(data).forEach(key => {
+                if (data[key] === '' || data[key] === null) {
+                    delete data[key];
+                }
+            });
 
             try {
-                const response = await fetch('/predict-raw', {
+                const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orders: [orders[0]] })
+                    body: JSON.stringify({ orders: [data] })
                 });
 
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(error.detail || 'Erreur de prédiction');
+                    throw new Error(error.detail || 'Erreur lors de la prédiction');
                 }
 
                 const result = await response.json();
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('resultSection').classList.add('show');
-                document.getElementById('successMessage').textContent = 'Prediction reussie.';
+
+                // Display results
                 document.getElementById('resultCustomerId').textContent = result.customer_id || '-';
                 document.getElementById('resultCluster').textContent = result.cluster;
                 document.getElementById('resultSegment').textContent = result.segment_name;
                 document.getElementById('resultAction').textContent = result.segment_action;
 
                 const confidence = (result.confidence * 100).toFixed(1);
-                document.getElementById('confidencePercent').textContent = confidence + '%';
+                document.getElementById('resultConfidence').textContent = confidence + '%';
                 document.getElementById('confidenceFill').style.width = confidence + '%';
 
-                // Display 5 engineered features for clustering
-                const featuresDisplay = document.getElementById('featuresDisplay');
-                if (result.engineered_features && featuresDisplay) {
-                    const features = result.engineered_features;
-                    const featureLine = `
-                        <strong>5 Features Modele Clustering:</strong><br/>
-                        Recency (jours): <strong>${features.Recency?.toFixed(0) || '-'}</strong> | 
-                        Review Score: <strong>${features.avg_review_score_full?.toFixed(2) || '-'}/5.0</strong> | 
-                        Livraison (jours): <strong>${features.avg_delivery_days?.toFixed(1) || '-'}</strong> | 
-                        Versements: <strong>${features.avg_installments?.toFixed(1) || '-'}</strong> | 
-                        CLV (BRL): <strong>${features.CLV_estimate?.toFixed(0) || '-'}</strong>
-                    `;
-                    featuresDisplay.innerHTML = featureLine;
+                // Display engineered features
+                if (result.engineered_features) {
+                    const feat = result.engineered_features;
+                    document.getElementById('feat_recency').textContent = Math.round(feat.Recency || 0);
+                    document.getElementById('feat_review').textContent = (feat.avg_review_score_full || 0).toFixed(2);
+                    document.getElementById('feat_delivery').textContent = (feat.avg_delivery_days || 0).toFixed(1);
+                    document.getElementById('feat_installments').textContent = (feat.avg_installments || 0).toFixed(1);
+                    document.getElementById('feat_clv').textContent = Math.round(feat.CLV_estimate || 0);
                 }
+
+                                document.getElementById('resultSection').classList.add('show');
 
                 document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
             } catch (error) {
-                document.getElementById('loading').style.display = 'none';
                 document.getElementById('errorMessage').textContent = 'Erreur: ' + error.message;
                 document.getElementById('errorMessage').classList.add('show');
+                console.error(error);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
             }
         });
 
-        // Multiple example scenarios for different customer segments
-        function loadExample() {
-            const today = new Date();
-            
-            // Helper to subtract days
-            function subtractDays(date, days) {
-                const result = new Date(date);
-                result.setDate(result.getDate() - days);
-                return result.toISOString().split('T')[0];
-            }
-            
-            // Helper to get time, with variation
-            function randomTime() {
-                const hours = String(Math.floor(Math.random() * 23)).padStart(2, '0');
-                const mins = String(Math.floor(Math.random() * 59)).padStart(2, '0');
-                return `${hours}:${mins}`;
-            }
-            
-            const examples = [
-                {
-                    name: "Client A - Achat moyen",
-                    data: {
-                        order_id: 'ORDER-2023-MEDIUM',
-                        customer_unique_id: 'CUST-REGULAR',
-                        order_status: 'delivered',
-                        order_purchase_date: subtractDays(today, 306),
-                        order_purchase_time: '10:00',
-                        payment_value: '1.50',
-                        price: '1.20',
-                        super_categorie: 'electronics',
-                        freight_value: '0.15',
-                        payment_installments: '5',
-                        order_approved_date: subtractDays(today, 306),
-                        order_approved_time: '10:15',
-                        customer_lat: '-23.5505',
-                        customer_lng: '-46.6333',
-                        order_estimated_delivery_date: subtractDays(today, 292),
-                        order_estimated_delivery_time: '23:59',
-                        order_delivered_customer_date: subtractDays(today, 289),
-                        order_delivered_customer_time: '14:00',
-                        order_delivered_carrier_date: subtractDays(today, 294),
-                        order_delivered_carrier_time: '10:00',
-                        review_score: '3',
-                        review_creation_date: subtractDays(today, 284),
-                        review_creation_time: '11:00'
-                    }
-                },
-                {
-                    name: "Client B - Petit achat satisfait",
-                    data: {
-                        order_id: 'ORDER-2023-DISSATISFIED',
-                        customer_unique_id: 'CUST-DISSATISFIED',
-                        order_status: 'delivered',
-                        order_purchase_date: subtractDays(today, 303),
-                        order_purchase_time: '15:30',
-                        payment_value: '0.50',
-                        price: '0.40',
-                        super_categorie: 'other',
-                        freight_value: '0.05',
-                        payment_installments: '1',
-                        order_approved_date: subtractDays(today, 303),
-                        order_approved_time: '15:45',
-                        customer_lat: '-23.5505',
-                        customer_lng: '-46.6333',
-                        order_estimated_delivery_date: subtractDays(today, 289),
-                        order_estimated_delivery_time: '23:59',
-                        order_delivered_customer_date: subtractDays(today, 286),
-                        order_delivered_customer_time: '16:00',
-                        order_delivered_carrier_date: subtractDays(today, 288),
-                        order_delivered_carrier_time: '12:00',
-                        review_score: '5',
-                        review_creation_date: subtractDays(today, 281),
-                        review_creation_time: '09:00'
-                    }
-                },
-                {
-                    name: "Client C - Achat recent",
-                    data: {
-                        order_id: 'ORDER-2024-DORMANT',
-                        customer_unique_id: 'CUST-DORMANT',
-                        order_status: 'delivered',
-                        order_purchase_date: subtractDays(today, 127),
-                        order_purchase_time: '12:00',
-                        payment_value: '0.60',
-                        price: '0.50',
-                        super_categorie: 'home',
-                        freight_value: '0.08',
-                        payment_installments: '2',
-                        order_approved_date: subtractDays(today, 127),
-                        order_approved_time: '12:15',
-                        customer_lat: '-23.5505',
-                        customer_lng: '-46.6333',
-                        order_estimated_delivery_date: subtractDays(today, 123),
-                        order_estimated_delivery_time: '23:59',
-                        order_delivered_customer_date: subtractDays(today, 121),
-                        order_delivered_customer_time: '10:00',
-                        order_delivered_carrier_date: subtractDays(today, 124),
-                        order_delivered_carrier_time: '08:00',
-                        review_score: '4',
-                        review_creation_date: subtractDays(today, 118),
-                        review_creation_time: '14:00'
-                    }
-                },
-                {
-                    name: "Client D - Livraison lente",
-                    data: {
-                        order_id: 'ORDER-2023-PREMIUM-CREDIT',
-                        customer_unique_id: 'CUST-PREMIUM-CREDIT',
-                        order_status: 'delivered',
-                        order_purchase_date: subtractDays(today, 300),
-                        order_purchase_time: '08:00',
-                        payment_value: '2.00',
-                        price: '1.80',
-                        super_categorie: 'electronics',
-                        freight_value: '0.15',
-                        payment_installments: '1',
-                        order_approved_date: subtractDays(today, 300),
-                        order_approved_time: '08:30',
-                        customer_lat: '-23.5505',
-                        customer_lng: '-46.6333',
-                        order_estimated_delivery_date: subtractDays(today, 283),
-                        order_estimated_delivery_time: '23:59',
-                        order_delivered_customer_date: subtractDays(today, 270),
-                        order_delivered_customer_time: '18:00',
-                        order_delivered_carrier_date: subtractDays(today, 274),
-                        order_delivered_carrier_time: '14:00',
-                        review_score: '2',
-                        review_creation_date: subtractDays(today, 265),
-                        review_creation_time: '10:00'
-                    }
-                },
-                {
-                    name: "Client E - Gros achat",
-                    data: {
-                        order_id: 'ORDER-2023-PROMISING',
-                        customer_unique_id: 'CUST-PROMISING',
-                        order_status: 'delivered',
-                        order_purchase_date: subtractDays(today, 312),
-                        order_purchase_time: '14:00',
-                        payment_value: '8.00',
-                        price: '7.50',
-                        super_categorie: 'electronics',
-                        freight_value: '0.30',
-                        payment_installments: '5',
-                        order_approved_date: subtractDays(today, 312),
-                        order_approved_time: '14:30',
-                        customer_lat: '-23.5505',
-                        customer_lng: '-46.6333',
-                        order_estimated_delivery_date: subtractDays(today, 305),
-                        order_estimated_delivery_time: '23:59',
-                        order_delivered_customer_date: subtractDays(today, 300),
-                        order_delivered_customer_time: '16:00',
-                        order_delivered_carrier_date: subtractDays(today, 302),
-                        order_delivered_carrier_time: '10:00',
-                        review_score: '5',
-                        review_creation_date: subtractDays(today, 297),
-                        review_creation_time: '15:00'
-                    }
-                }
-            ];
-            
-            // Rotate through examples randomly
-            const currentExample = examples[Math.floor(Math.random() * examples.length)];
-            const exampleData = currentExample.data;
-
-            Object.entries(exampleData).forEach(([key, value]) => {
-                const input = document.querySelector(`[name="${key}"]`);
-                if (input) input.value = value;
-            });
-        }
+        // Form reset
+        document.getElementById('predictionForm').addEventListener('reset', () => {
+            clearMessages();
+        });
     </script>
 </body>
 </html>

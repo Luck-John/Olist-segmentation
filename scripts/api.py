@@ -71,37 +71,20 @@ class BulkPredictionRequest(BaseModel):
 class RawOrder(BaseModel):
     """
     Raw order-level record used to derive customer features.
-    The API will compute engineered features, then run clustering prediction.
+    Simplified to only include fields needed for the 5 main features.
     """
     order_id: str
     customer_unique_id: str
     order_status: str
 
-    order_purchase_timestamp: str
-    payment_value: float
-
-    # Optional-but-recommended fields for feature engineering
-    order_delivered_customer_date: Optional[str] = None
-    order_estimated_delivery_date: Optional[str] = None
-    order_approved_at: Optional[str] = None
-    order_delivered_carrier_date: Optional[str] = None
+    # Champs essentiels pour calculer les 5 features
+    order_purchase_timestamp: str  # Pour Recency
+    payment_value: float           # Pour CLV_estimate
+    payment_installments: Optional[float] = None  # Pour avg_installments
     
-    # Payment details
-    payment_installments: Optional[float] = None
-    
-    # Product details
-    price: Optional[float] = None
-    order_item_id: Optional[float] = None
-    super_categorie: Optional[str] = None
-    freight_value: Optional[float] = None
-    
-    # Review details
-    review_score: Optional[float] = None
-    review_creation_date: Optional[str] = None
-    
-    # Location details
-    customer_lat: Optional[float] = None
-    customer_lng: Optional[float] = None
+    # Champs optionnels mais recommandés
+    order_delivered_customer_date: Optional[str] = None  # Pour avg_delivery_days
+    review_score: Optional[float] = None                 # Pour avg_review_score_full
 
 
 class RawPredictionRequest(BaseModel):
@@ -306,9 +289,8 @@ class SegmentationAPI:
         """
         df = pd.DataFrame(orders)
         
-        # Parse dates
-        for col in ["order_purchase_timestamp", "order_delivered_customer_date",
-                     "order_estimated_delivery_date"]:
+        # Parse dates - uniquement les colonnes nécessaires pour les 5 features
+        for col in ["order_purchase_timestamp", "order_delivered_customer_date"]:
             if col in df.columns:
                 df[col] = pd.to_datetime(df[col], format="mixed", errors="coerce")
         
@@ -381,10 +363,13 @@ class SegmentationAPI:
         """
         Compute features from raw order-level records and predict.
 
-        Expected raw columns per order:
+        Expected raw columns per order (simplified to 5 features):
         - order_id, customer_unique_id, order_status
-        - order_purchase_timestamp, payment_value
-        - optional delivery/review/geographic columns (see RawOrder)
+        - order_purchase_timestamp (pour Recency)
+        - payment_value (pour CLV_estimate)
+        - payment_installments (pour avg_installments)
+        - optional: order_delivered_customer_date (pour avg_delivery_days)
+        - optional: review_score (pour avg_review_score_full)
         """
         if not orders:
             raise ValueError("No orders provided")
@@ -586,13 +571,13 @@ def _root_json(request: Request) -> Dict:
 @app.get("/")
 def root(request: Request):
     """
-    Les navigateurs envoient `Accept: text/html` → redirection vers le formulaire /form.
+    Les navigateurs envoient `Accept: text/html` → redirection vers le formulaire /simple.
     Clients API (curl, JSON) gardent une réponse JSON ; forcez avec `/?format=json`.
     """
     accept = (request.headers.get("accept") or "").lower()
     force_json = request.query_params.get("format") == "json"
     if not force_json and "text/html" in accept:
-        return RedirectResponse(url="/form", status_code=307)
+        return RedirectResponse(url="/simple", status_code=307)
     return _root_json(request)
 
 
@@ -642,7 +627,7 @@ def ui_form(request: Request):
 @app.get("/simple", response_class=HTMLResponse)
 def ui_simple(request: Request):
     """Simple form-based UI — served as raw HTML (no Jinja2 needed)."""
-    html_path = TEMPLATES_DIR / "ui_simple.html"
+    html_path = TEMPLATES_DIR / "form_simple.html"
     try:
         return HTMLResponse(content=html_path.read_text(encoding="utf-8"), status_code=200)
     except Exception as e:
@@ -1091,17 +1076,10 @@ def custom_docs():
         },
         "example_features": {
             "Recency": 180,
-            "Frequency": 15,
-            "Monetary": 5000,
-            "avg_delivery_days": 10,
-            "late_delivery_rate": 0.05,
-            "avg_delivery_delta": 2.0,
             "avg_review_score_full": 4.5,
-            "has_full_review": 1,
-            "avg_review_score_available": 4.5,
-            "has_available_review": 1,
-            "CLV": 10000.0,
-            "dist_sao_paulo": 120.0,
+            "avg_delivery_days": 10,
+            "avg_installments": 2.9,
+            "CLV_estimate": 2500.0,
         },
         "model_note": "Direct POST /predict expects exactly the feature_cols from GET /model-info (trained pipeline). "
         "POST /predict-raw accepts order-level rows and computes these features.",
