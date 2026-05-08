@@ -163,22 +163,21 @@
             display: none;
             text-align: center;
             padding: 2rem;
-            color: #0066cc;
         }
 
         .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
             border: 3px solid #e0e8f0;
-            border-top: 3px solid #0066cc;
+            border-top-color: #0066cc;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
+            animation: spin 0.6s linear infinite;
+            margin-bottom: 1rem;
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            to { transform: rotate(360deg); }
         }
 
         .error-message {
@@ -351,12 +350,13 @@
         <!-- Header -->
         <div class="header">
             <h1>Segmentation Clients Olist</h1>
-            <p>Prédisez le segment client en fonction de ses commandes</p>
+            <p>Prédisez le segment client en fonction de sa commande</p>
         </div>
 
         <!-- Form Card -->
         <div class="card">
-            <h2 class="card-title">Enregistrer une Commande Client</h2>
+            <h2 class="card-title">Prédiction de Segment Client</h2>
+            <p style="color: #666; margin-bottom: 1rem;">Renseignez une commande client pour obtenir une prédiction de segment (avec ou sans historique)</p>
             
             <div class="error-message" id="errorMessage"></div>
             <div class="success-message" id="successMessage"></div>
@@ -437,14 +437,13 @@
 
                 <!-- Buttons -->
                 <div class="button-group">
-                    <button type="reset" class="btn-secondary">Réinitialiser</button>
-                    <button type="button" class="btn-secondary" onclick="loadRandomExample()">Charger Exemple</button>
-                    <button type="submit" class="btn-primary">Prédire le Segment</button>
+                    <button type="button" class="btn-secondary" onclick="loadRandomExample()">📋 Charger Exemple</button>
+                    <button type="button" class="btn-primary" onclick="submitPrediction()">🔮 Prédire</button>
                 </div>
             </form>
 
-            <!-- Results -->
-            <div class="result-section" id="resultSection">
+            <!-- Results Section -->
+            <div id="resultSection" class="result-section">
                 <h2 class="card-title">Résultats</h2>
                 
                 <div class="result-grid">
@@ -458,24 +457,25 @@
                     </div>
                     <div class="result-item">
                         <div class="result-label">Confiance</div>
-                        <div class="result-value" id="resultConfidence">-</div>
-                        <div class="confidence-bar">
-                            <div class="confidence-fill" id="confidenceFill"></div>
-                        </div>
+                        <div class="result-value" id="resultConfidence">0%</div>
                     </div>
                 </div>
 
-                <div style="margin-top: 1rem;">
-                    <span class="segment-badge" id="resultSegment">-</span>
+                <div style="margin-top: 1.5rem;">
+                    <div class="segment-badge" id="resultSegment">-</div>
                 </div>
 
-                <div style="margin-top: 1rem;">
-                    <div class="result-label">Action Recommandée</div>
-                    <div class="result-value" id="resultAction" style="font-size: 1rem; color: #666;">-</div>
+                <div style="margin-top: 1rem; padding: 1rem; background: white; border-radius: 6px; border-left: 3px solid #0066cc;">
+                    <strong style="color: #0066cc;">Action Recommandée:</strong>
+                    <div style="margin-top: 0.5rem;" id="resultAction">-</div>
                 </div>
 
-                <!-- Engineered Features -->
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confidenceFill" style="width: 0%"></div>
+                </div>
+
                 <div class="features-section">
+                    <div class="features-title">Caractéristiques Engineered</div>
                     <div class="features-grid">
                         <div class="feature-item">
                             <div class="feature-name">Recency (j)</div>
@@ -518,100 +518,8 @@
             return Math.random().toString(36).substr(2, 9).toUpperCase();
         }
 
-        // Example data - WITHOUT cluster labels (blind testing)
-        const examples = [
-            {
-                order_id: 'ORD-' + generateId(),
-                customer_unique_id: 'CUST-' + generateId(),
-                order_status: 'delivered',
-                order_purchase_date: subtractDays(new Date(), 150),
-                order_purchase_time: '10:00',
-                payment_value: '2.50',
-                payment_installments: '2',
-                order_delivered_customer_date: subtractDays(new Date(), 145),
-                order_delivered_customer_time: '14:00',
-                review_score: '4'
-            },
-            {
-                order_id: 'ORD-' + generateId(),
-                customer_unique_id: 'CUST-' + generateId(),
-                order_status: 'delivered',
-                order_purchase_date: subtractDays(new Date(), 80),
-                order_purchase_time: '14:30',
-                payment_value: '1.20',
-                payment_installments: '1',
-                order_delivered_customer_date: subtractDays(new Date(), 75),
-                order_delivered_customer_time: '10:00',
-                review_score: '5'
-            },
-            {
-                order_id: 'ORD-' + generateId(),
-                customer_unique_id: 'CUST-' + generateId(),
-                order_status: 'delivered',
-                order_purchase_date: subtractDays(new Date(), 300),
-                order_purchase_time: '09:15',
-                payment_value: '3.75',
-                payment_installments: '3',
-                order_delivered_customer_date: subtractDays(new Date(), 295),
-                order_delivered_customer_time: '12:00',
-                review_score: '3'
-            },
-            {
-                order_id: 'ORD-' + generateId(),
-                customer_unique_id: 'CUST-' + generateId(),
-                order_status: 'delivered',
-                order_purchase_date: subtractDays(new Date(), 30),
-                order_purchase_time: '16:45',
-                payment_value: '0.85',
-                payment_installments: '1',
-                order_delivered_customer_date: subtractDays(new Date(), 25),
-                order_delivered_customer_time: '18:30',
-                review_score: '2'
-            },
-            {
-                order_id: 'ORD-' + generateId(),
-                customer_unique_id: 'CUST-' + generateId(),
-                order_status: 'delivered',
-                order_purchase_date: subtractDays(new Date(), 200),
-                order_purchase_time: '11:20',
-                payment_value: '6.00',
-                payment_installments: '4',
-                order_delivered_customer_date: subtractDays(new Date(), 190),
-                order_delivered_customer_time: '15:45',
-                review_score: '4'
-            }
-        ];
-
-        // Load random example
-        function loadRandomExample() {
-            const example = examples[Math.floor(Math.random() * examples.length)];
-            const form = document.getElementById('predictionForm');
-            
-            form.reset();
-            Object.keys(example).forEach(key => {
-                const input = form.querySelector(`[name="${key}"]`);
-                if (input) {
-                    input.value = example[key];
-                }
-            });
-
-            clearMessages();
-        }
-
-        // Clear messages
-        function clearMessages() {
-            document.getElementById('errorMessage').classList.remove('show');
-            document.getElementById('successMessage').classList.remove('show');
-            document.getElementById('resultSection').classList.remove('show');
-        }
-
-        // Form submission
-        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            clearMessages();
-            document.getElementById('loading').style.display = 'block';
-
+        // Get form data as object
+        function getFormData() {
             const formData = new FormData(document.getElementById('predictionForm'));
             const data = Object.fromEntries(formData);
 
@@ -638,6 +546,107 @@
                     delete data[key];
                 }
             });
+
+            return data;
+        }
+
+        // Load random example
+        function loadRandomExample() {
+            const examples = [
+                {
+                    order_id: 'ORD-' + generateId(),
+                    customer_unique_id: 'CUST-' + generateId(),
+                    order_status: 'delivered',
+                    order_purchase_date: subtractDays(new Date(), 150),
+                    order_purchase_time: '10:00',
+                    payment_value: '150.00',
+                    payment_installments: '2',
+                    order_delivered_customer_date: subtractDays(new Date(), 145),
+                    order_delivered_customer_time: '14:00',
+                    review_score: '4'
+                },
+                {
+                    order_id: 'ORD-' + generateId(),
+                    customer_unique_id: 'CUST-' + generateId(),
+                    order_status: 'delivered',
+                    order_purchase_date: subtractDays(new Date(), 80),
+                    order_purchase_time: '14:30',
+                    payment_value: '200.00',
+                    payment_installments: '3',
+                    order_delivered_customer_date: subtractDays(new Date(), 75),
+                    order_delivered_customer_time: '10:00',
+                    review_score: '5'
+                },
+                {
+                    order_id: 'ORD-' + generateId(),
+                    customer_unique_id: 'CUST-' + generateId(),
+                    order_status: 'delivered',
+                    order_purchase_date: subtractDays(new Date(), 30),
+                    order_purchase_time: '16:45',
+                    payment_value: '120.00',
+                    payment_installments: '2',
+                    order_delivered_customer_date: subtractDays(new Date(), 25),
+                    order_delivered_customer_time: '18:30',
+                    review_score: '2'
+                },
+                {
+                    order_id: 'ORD-' + generateId(),
+                    customer_unique_id: 'CUST-' + generateId(),
+                    order_status: 'delivered',
+                    order_purchase_date: subtractDays(new Date(), 200),
+                    order_purchase_time: '09:15',
+                    payment_value: '100.00',
+                    payment_installments: '1',
+                    order_delivered_customer_date: subtractDays(new Date(), 195),
+                    order_delivered_customer_time: '12:00',
+                    review_score: '3'
+                }
+            ];
+
+            const example = examples[Math.floor(Math.random() * examples.length)];
+            const form = document.getElementById('predictionForm');
+            
+            form.reset();
+            Object.keys(example).forEach(key => {
+                const input = form.querySelector(`[name="${key}"]`);
+                if (input) {
+                    input.value = example[key];
+                }
+            });
+
+            clearMessages();
+        }
+
+        // Clear messages
+        function clearMessages() {
+            document.getElementById('errorMessage').classList.remove('show');
+            document.getElementById('successMessage').classList.remove('show');
+            document.getElementById('resultSection').classList.remove('show');
+        }
+
+        // Submit prediction with single order
+        async function submitPrediction() {
+            const data = getFormData();
+            
+            if (!data.order_id) {
+                alert('⚠️ Veuillez remplir l\'ID Commande');
+                return;
+            }
+            if (!data.customer_unique_id) {
+                alert('⚠️ Veuillez remplir l\'ID Client');
+                return;
+            }
+            if (!data.order_purchase_timestamp) {
+                alert('⚠️ Veuillez remplir la date d\'achat');
+                return;
+            }
+            if (!data.payment_value) {
+                alert('⚠️ Veuillez remplir le montant de paiement');
+                return;
+            }
+
+            clearMessages();
+            document.getElementById('loading').style.display = 'block';
 
             try {
                 const response = await fetch(API_URL, {
@@ -673,7 +682,9 @@
                     document.getElementById('feat_clv').textContent = Math.round(feat.CLV_estimate || 0);
                 }
 
-                                document.getElementById('resultSection').classList.add('show');
+                document.getElementById('successMessage').textContent = '✓ Prédiction réussie';
+                document.getElementById('successMessage').classList.add('show');
+                document.getElementById('resultSection').classList.add('show');
 
                 document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
@@ -684,7 +695,7 @@
             } finally {
                 document.getElementById('loading').style.display = 'none';
             }
-        });
+        }
 
         // Form reset
         document.getElementById('predictionForm').addEventListener('reset', () => {
