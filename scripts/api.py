@@ -207,30 +207,58 @@ class SegmentationAPI:
 
     def _ensure_customer_db(self) -> None:
         """
-        Charge la base clients (base_final.csv) une seule fois.
-        Colonnes minimales utilisées pour les features :
-          customer_unique_id, order_id, order_status,
-          order_purchase_timestamp, payment_value,
-          payment_installments, order_delivered_customer_date, review_score
+        Charge la base clients une seule fois (lazy).
+
+        Ordre de priorité pour trouver le fichier :
+        1. notebooks/reports/customer_orders_db.csv  — version légère (8 colonnes, ~14 MB),
+           générée par `python -c "..."` et incluse dans l'image Docker via notebooks/reports/.
+        2. data/base_final.csv — fichier complet disponible en local uniquement
+           (exclu du Docker/Railway via .dockerignore).
         """
         if self._customer_db_loaded:
             return
-        db_path = PROJECT_ROOT / "data" / "base_final.csv"
-        if not db_path.exists():
-            logger.warning(f"Customer DB not found at {db_path}")
-            self._customer_db = None
-            self._customer_db_loaded = True
-            return
+
         needed_cols = [
             "customer_unique_id", "order_id", "order_status",
             "order_purchase_timestamp", "payment_value",
             "payment_installments", "order_delivered_customer_date", "review_score"
         ]
+
+        # Candidats dans l'ordre de préférence
+        candidates = [
+            self.reports_dir / "customer_orders_db.csv",   # déployé
+            PROJECT_ROOT / "data" / "base_final.csv",      # local seulement
+        ]
+
+        db_path = None
+        for p in candidates:
+            if p.exists():
+                db_path = p
+                break
+
+        if db_path is None:
+            logger.warning(
+                "Customer DB introuvable. "
+                "Générez notebooks/reports/customer_orders_db.csv avec le script fourni."
+            )
+            self._customer_db = None
+            self._customer_db_loaded = True
+            return
+
         try:
-            self._customer_db = pd.read_csv(db_path, usecols=needed_cols, low_memory=False)
-            logger.info(f"Customer DB loaded: {len(self._customer_db)} rows")
+            # customer_orders_db.csv contient déjà uniquement les colonnes nécessaires
+            # base_final.csv nécessite un filtrage par usecols
+            if db_path.name == "customer_orders_db.csv":
+                self._customer_db = pd.read_csv(db_path, low_memory=False)
+            else:
+                self._customer_db = pd.read_csv(db_path, usecols=needed_cols, low_memory=False)
+            logger.info(
+                f"Customer DB chargée depuis '{db_path.name}' : "
+                f"{len(self._customer_db)} lignes, "
+                f"{self._customer_db['customer_unique_id'].nunique()} clients uniques"
+            )
         except Exception as e:
-            logger.error(f"Failed to load customer DB: {e}")
+            logger.error(f"Echec du chargement de la customer DB ({db_path}): {e}")
             self._customer_db = None
         self._customer_db_loaded = True
 
