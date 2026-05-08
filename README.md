@@ -2,42 +2,48 @@
 
 Projet de Machine Learning 2 — ISE2, Semestre 2 (2026)
 
+## 🚀 API en Production
+
+**L'API est déployée et accessible en ligne :**
+👉 [https://olist-segmentation-api-production.up.railway.app/form](https://olist-segmentation-api-production.up.railway.app/form)
+
 ## Objectif
 
-Ce projet realise la **segmentation non supervisee** des clients de la plateforme e-commerce bresilienne Olist.
-L'objectif est d'identifier des groupes de clients aux comportements distincts pour orienter les strategies marketing.
+Ce projet réalise la **segmentation non supervisée** des clients de la plateforme e-commerce brésilienne Olist.
+L'objectif est d'identifier des groupes de clients aux comportements distincts pour orienter les stratégies marketing.
 
 ## Structure du projet
 
 ```
 Projet_2026/
-├── data/                        # Donnees brutes Olist (CSV)
+├── data/                        # Données brutes Olist (CSV)
 ├── notebooks/                   # Notebooks Jupyter
 │   ├── segmentation_01_analyse.ipynb        # Analyse exploratoire
 │   ├── segmentation_02_analyse.ipynb        # Analyse approfondie
-│   ├── Segmentation_03_modelisation.ipynb   # Modelisation et clustering
-│   ├── simulation_frequence_maj.ipynb       # Simulation frequence de MAJ
-│   ├── models/                  # Modeles serialises (.pkl)
-│   ├── figures/                 # Graphiques generes
+│   ├── Segmentation_03_modelisation.ipynb   # Modélisation et clustering
+│   ├── simulation_frequence_maj.ipynb       # Simulation fréquence de MAJ
+│   ├── models/                  # Modèles sérialisés (.pkl)
+│   ├── figures/                 # Graphiques générés
 │   └── reports/                 # Rapports CSV
 ├── scripts/                     # Scripts Python
 │   ├── api.py                   # API FastAPI de prediction
-│   ├── full_pipeline.py         # Pipeline complet d'entrainement
+│   ├── full_pipeline.py         # Pipeline complet d'entraînement
 │   ├── start_api.py             # Lanceur de l'API
-│   └── run_pipeline.py          # Execution du pipeline
+│   ├── run_pipeline.py          # Exécution du pipeline
+│   └── gen_customer_db.py       # Génération base clients optimisée
 ├── src/                         # Code source modulaire
 │   ├── data/                    # Chargement et preprocessing
 │   ├── features/                # Feature engineering (RFM, CLV)
-│   ├── clustering/              # Modeles de clustering
+│   ├── clustering/              # Modèles de clustering
 │   └── utils/                   # Configuration et utilitaires
 ├── templates/                   # Templates HTML (interface web)
-├── static/                      # Fichiers statiques (CSS, JS)
+│   └── segmentation_form.html   # Interface principale de prédiction
 ├── tests/                       # Tests unitaires (pytest)
 ├── config/                      # Configuration (config.yaml)
-├── Dockerfile                   # Containerisation Docker
-├── railway.toml                 # Deploiement Railway
-├── requirements.txt             # Dependances Python
-└── requirements-api.txt         # Dependances API
+├── Dockerfile                   # Conteneurisation Docker
+├── railway.toml                 # Déploiement Railway
+├── requirements.txt             # Dépendances Python
+└── requirements-api.txt         # Dépendances API
 ```
 
 ## Methodologie
@@ -83,22 +89,33 @@ Pipeline : **QuantileTransformer → StandardScaler → PCA → KMeans (K=5)**
 Notebook dedie pour determiner la frequence optimale de re-entrainement du modele
 (drift des features, stabilite ARI, PSI).
 
-## API de prediction
+## 🎯 API de Prédiction Intelligente
 
-L'API FastAPI permet de predire le segment d'un nouveau client en temps reel.
+L'API FastAPI permet de prédire le segment d'un client avec **fusion automatique d'historique**.
 
+### Modes de prédiction
+
+#### 1. **Mode Commandes** (`/predict-smart`)
+- Entrez des commandes + ID client (optionnel)
+- **Fusion automatique** : si le client existe en base, son historique est fusionné
+- **Nouveau client** : prédiction sur les commandes saisies uniquement
+
+#### 2. **Mode Historique Direct** (`/customer/{id}/predict`)
+- Entrez uniquement l'ID client existant
+- Prédiction basée sur **tout l'historique** du client
+
+### Endpoints principaux
+- `GET /form` : Interface web principale
+- `POST /predict-smart` : Prédiction intelligente avec fusion
+- `GET /customer/{id}/predict` : Prédiction directe depuis historique
+- `GET /customer/{id}/orders` : Voir l'historique d'un client
+
+### Lancement local
 ```bash
-# Lancer l'API
 cd scripts
 python start_api.py
-
-# Acceder a l'interface
-# http://localhost:8000/form
+# Accès : http://localhost:8003/form
 ```
-
-### Endpoints
-- `GET /form` : Interface web de prediction
-- `POST /predict-raw` : Prediction via JSON
 
 ## Installation
 

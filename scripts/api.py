@@ -1230,6 +1230,33 @@ def predict_customer_from_history(customer_id: str):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@app.get("/customer/{customer_id}/orders")
+def get_customer_orders(customer_id: str):
+    """
+    Récupère les commandes historiques d'un client pour vérifier s'il existe en base.
+    Utilisé par le formulaire pour déterminer si c'est un client existant ou nouveau.
+    
+    Retourne:
+    {
+        "is_new_customer": bool,
+        "orders": List[Dict] (vide si nouveau client)
+    }
+    """
+    if not segmentation_api:
+        raise HTTPException(status_code=503, detail="API not initialized")
+    
+    try:
+        orders = segmentation_api.get_customer_orders_from_db(customer_id)
+        is_new = len(orders) == 0
+        return {
+            "is_new_customer": is_new,
+            "orders": orders
+        }
+    except Exception as e:
+        logger.error(f"Error getting customer orders: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @app.post("/predict-bulk")
 def predict_bulk(request: BulkPredictionRequest):
     """

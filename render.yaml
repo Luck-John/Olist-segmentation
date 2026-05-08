@@ -1,7 +1,0 @@
-services:
-  - type: web
-    name: olist-segmentation-api
-    env: docker
-    plan: free
-    healthCheckPath: /health
-    autoDeploy: true
