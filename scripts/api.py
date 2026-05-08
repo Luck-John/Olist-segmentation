@@ -220,72 +220,65 @@ class SegmentationAPI:
         if missing:
             raise ValueError(f"Missing features: {missing}")
         
-        # Create feature vector in correct order - START WITH FLOAT32 to match model dtype
+        # Create feature vector in correct order
         logger.info(f"Step 1: Creating feature vector from {len(features)} features")
-        X = np.array([features[col] for col in self.pipeline['feature_cols']], dtype=np.float32).reshape(1, -1)
-        logger.info(f"Step 1 OK: X shape={X.shape}, dtype={X.dtype}")
+        X = np.array([features[col] for col in self.pipeline['feature_cols']], dtype=np.float64).reshape(1, -1)
+        logger.info(f"Step 1 OK: X shape={X.shape}, values={X}")
         
-        # Scale - will output whatever dtype scaler produces, then convert to float32
-        logger.info(f"Step 2: Scaling with {type(self.pipeline['scaler'])}")
+        # STEP 1B: CLAMP features to training data range (from QuantileTransformer bounds)
+        # This is CRITICAL: values outside the QT's fitted range get mapped to extreme
+        # quantiles (±5.199), making very different inputs collapse to the same prediction.
+        qt = self.pipeline.get('quantile_transformer')
+        if qt is None:
+            raise ValueError("QuantileTransformer not found in pipeline!")
+        
+        qt_min = qt.quantiles_[0, :]    # per-feature minimum seen during training
+        qt_max = qt.quantiles_[-1, :]   # per-feature maximum seen during training
+        X_clamped = np.clip(X, qt_min, qt_max)
+        logger.info(f"Step 1B: Clamped to training range. Before={X}, After={X_clamped}")
+        
+        # STEP 2: QUANTILE TRANSFORMER
+        logger.info(f"Step 2: Applying QuantileTransformer")
+        X_qt = qt.transform(X_clamped)
+        logger.info(f"Step 2 OK: X_qt values={X_qt}")
+        
+        # STEP 3: STANDARD SCALER
+        logger.info(f"Step 3: Scaling with StandardScaler")
         scaler = self.pipeline['scaler']
-        X_scaled = scaler.transform(X)
-        logger.info(f"Step 2 OK: X_scaled shape={X_scaled.shape}, dtype={X_scaled.dtype}")
-        X_scaled = np.asarray(X_scaled, dtype=np.float32)
-        logger.info(f"Step 2 CAST: X_scaled dtype={X_scaled.dtype} after cast to float32")
+        X_scaled = scaler.transform(X_qt)
+        logger.info(f"Step 3 OK: X_scaled values={X_scaled}")
         
-        # PCA transform - convert to float32
-        logger.info(f"Step 3: PCA transform")
+        # STEP 4: PCA TRANSFORM
+        logger.info(f"Step 4: PCA transform")
         pca = self.pipeline['pca']
         X_pca_full = pca.transform(X_scaled)
-        logger.info(f"Step 3 OK: X_pca shape={X_pca_full.shape}, dtype={X_pca_full.dtype}")
-        X_pca_full = np.asarray(X_pca_full, dtype=np.float32)
+        logger.info(f"Step 4 OK: X_pca values={X_pca_full}")
         
-        # Predict cluster with PCA-transformed input to match model training
-        logger.info(f"Step 4: Predicting with model")
+        # STEP 5: PREDICT CLUSTER
+        logger.info(f"Step 5: Predicting with model")
         model = self.pipeline['model']
-        model_dtype = model.cluster_centers_.dtype
-        logger.info(f"Model centers dtype: {model_dtype}, X_pca shape: {X_pca_full.shape}")
-        
-        # Ensure both are the same dtype
-        X_for_predict = X_pca_full.astype(model_dtype, copy=False)
-        logger.info(f"Step 4: Calling predict with dtype={X_for_predict.dtype}, shape={X_for_predict.shape}")
+        X_for_predict = X_pca_full.astype(model.cluster_centers_.dtype, copy=False)
         
         cluster = model.predict(X_for_predict)[0]
-        logger.info(f"Step 4 OK: Predicted cluster {cluster}")
+        logger.info(f"Step 5 OK: Predicted cluster {cluster}")
         
         # Get segment name and action
         cluster_names = self.pipeline['cluster_names']
-        segment_name = cluster_names.get(str(cluster), f"Cluster {cluster}")
+        segment_name = cluster_names.get(int(cluster), f"Cluster {cluster}")
         
         segment_actions = self.pipeline['segment_actions']
-        segment_action = segment_actions.get(str(cluster), "Standard")
+        segment_action = segment_actions.get(int(cluster), "Standard")
         
         # Get 2D PCA for visualization
         X_pca_2d = X_pca_full[:, :2]
         
-        # Calculate distances to all cluster centers first
-        all_distances = []
-        for i, center in enumerate(model.cluster_centers_):
-            dist = np.linalg.norm(center - X_for_predict[0])
-            all_distances.append(dist)
+        # Calculate confidence based on distance to assigned cluster center
+        all_distances = [float(np.linalg.norm(center - X_for_predict[0])) for center in model.cluster_centers_]
+        min_dist = all_distances[int(cluster)]
+        confidence = 1.0 / (1.0 + min_dist)
         
-        # Find the closest cluster
-        closest_cluster = np.argmin(all_distances)
-        distances = all_distances[closest_cluster]
-        
-        # Calculate confidence based on distance
-        confidence = 1.0 / (1.0 + distances)
-        
-        # Debug: Log cluster centers and distances
-        logger.info(f"Cluster centers shape: {model.cluster_centers_.shape}")
-        logger.info(f"Feature vector: {X_for_predict[0]}")
-        logger.info(f"All distances: {all_distances}")
-        logger.info(f"Closest cluster: {closest_cluster}")
-        logger.info(f"Distance to cluster {closest_cluster}: {distances}")
-        logger.info(f"Confidence: {confidence}")
-        
-        # Use the closest cluster instead of model.predict()
-        cluster = closest_cluster
+        logger.info(f"Distances to all centers: {[f'{d:.4f}' for d in all_distances]}")
+        logger.info(f"Predicted cluster={cluster}, confidence={confidence:.4f}")
         
         return {
             "cluster": int(cluster),
@@ -296,64 +289,93 @@ class SegmentationAPI:
             "confidence": float(confidence),
         }
 
-    def _generate_historical_orders(self, base_order: Dict) -> List[Dict]:
+    def _compute_features_from_orders(self, orders: List[Dict]) -> Dict[str, float]:
         """
-        Generate realistic historical orders for a customer based on their main order.
-        This ensures the feature engineering can calculate proper RFM metrics.
+        Compute the 5 model features directly from raw order data.
+        
+        This replaces the old approach of generating fake historical orders
+        and running the batch FeatureEngineer pipeline, which diluted user
+        input with random noise and produced out-of-range feature values.
+        
+        Features computed:
+        - Recency: days since last order (relative to snapshot)
+        - avg_review_score_full: average review score across orders
+        - avg_delivery_days: average delivery time in days
+        - avg_installments: average payment installments
+        - CLV_estimate: customer lifetime value estimate
         """
-        import random
-        from datetime import datetime, timedelta
+        df = pd.DataFrame(orders)
         
-        base_customer_id = base_order["customer_unique_id"]
-        base_lat = float(base_order.get("customer_lat", -23.5505))
-        base_lng = float(base_order.get("customer_lng", -46.6333))
-        base_category = base_order.get("super_categorie", "electronics")
+        # Parse dates
+        for col in ["order_purchase_timestamp", "order_delivered_customer_date",
+                     "order_estimated_delivery_date"]:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], format="mixed", errors="coerce")
         
-        # Parse the main order date
-        main_date = pd.to_datetime(base_order["order_purchase_timestamp"])
+        # Filter delivered orders (fall back to all if none delivered)
+        delivered = df[df["order_status"] == "delivered"]
+        if delivered.empty:
+            delivered = df
         
-        historical_orders = []
+        # --- 1. Recency ---
+        # Recency = days since last purchase, seen from TODAY.
+        # In training, Recency was computed as (snapshot_date - last_order_date).days
+        # where snapshot_date = max(all_dates)+1 = end of dataset period (~2018).
+        # For API predictions, we use today so that recent orders → low Recency
+        # and old orders → high Recency. The clamping in predict_segment()
+        # ensures values stay within the QT's training range [58, 624].
+        last_order = delivered["order_purchase_timestamp"].max()
+        snapshot_date = pd.Timestamp.today()
+        recency = (snapshot_date - last_order).days if pd.notna(last_order) else 287  # training mean
         
-        # Generate 3-5 historical orders over the past 6 months
-        num_orders = random.randint(3, 5)
+        # --- 2. avg_review_score_full ---
+        review = 4.0  # training mean ≈ 4.16
+        if "review_score" in delivered.columns:
+            review_vals = pd.to_numeric(delivered["review_score"], errors="coerce").dropna()
+            if len(review_vals) > 0:
+                review = float(review_vals.mean())
         
-        for i in range(num_orders):
-            # Random date between 6 months ago and 1 month before main order
-            days_ago = random.randint(30, 180)
-            hist_date = main_date - timedelta(days=days_ago)
-            
-            # Vary the order details slightly
-            categories = ["electronics", "home", "health_beauty", "fashion", "sports_leisure"]
-            hist_category = random.choice([base_category] + [c for c in categories if c != base_category])
-            
-            # Generate realistic order values
-            base_payment = float(base_order["payment_value"])
-            payment_variation = random.uniform(0.7, 1.3)
-            hist_payment = round(base_payment * payment_variation, 2)
-            
-            hist_order = {
-                "order_id": f"HIST-{base_customer_id}-{i+1:03d}",
-                "customer_unique_id": base_customer_id,
-                "order_status": "delivered",  # Most historical orders should be delivered
-                "order_purchase_timestamp": hist_date.strftime("%Y-%m-%d %H:%M:%S"),
-                "payment_value": hist_payment,
-                "price": round(hist_payment * 0.8, 2),
-                "super_categorie": hist_category,
-                "freight_value": round(random.uniform(5, 25), 2),
-                "payment_installments": random.randint(1, 3),
-                "order_approved_at": (hist_date + timedelta(hours=random.randint(1, 24))).strftime("%Y-%m-%d %H:%M:%S"),
-                "customer_lat": base_lat + random.uniform(-0.1, 0.1),
-                "customer_lng": base_lng + random.uniform(-0.1, 0.1),
-                "order_estimated_delivery_date": (hist_date + timedelta(days=random.randint(7, 15))).strftime("%Y-%m-%d %H:%M:%S"),
-                "order_delivered_customer_date": (hist_date + timedelta(days=random.randint(5, 12))).strftime("%Y-%m-%d %H:%M:%S"),
-                "order_delivered_carrier_date": (hist_date + timedelta(days=random.randint(3, 8))).strftime("%Y-%m-%d %H:%M:%S"),
-                "review_score": random.randint(3, 5),
-                "review_creation_date": (hist_date + timedelta(days=random.randint(1, 7))).strftime("%Y-%m-%d %H:%M:%S")
-            }
-            
-            historical_orders.append(hist_order)
+        # --- 3. avg_delivery_days ---
+        delivery_days = 12.0  # training mean ≈ 12.1
+        if ("order_delivered_customer_date" in delivered.columns and 
+            "order_purchase_timestamp" in delivered.columns):
+            dd = (delivered["order_delivered_customer_date"] - 
+                  delivered["order_purchase_timestamp"]).dt.days
+            dd = dd.dropna()
+            if len(dd) > 0:
+                delivery_days = float(dd.mean())
+                if delivery_days < 0:
+                    delivery_days = 12.0  # fallback for bad dates
         
-        return historical_orders
+        # --- 4. avg_installments ---
+        installments = 2.9  # training mean
+        if "payment_installments" in delivered.columns:
+            inst_vals = pd.to_numeric(delivered["payment_installments"], errors="coerce").dropna()
+            if len(inst_vals) > 0:
+                installments = float(inst_vals.mean())
+        
+        # --- 5. CLV_estimate ---
+        # Training CLV = Monetary × (Frequency / dataset_duration_years)
+        # Training dataset ≈ 2 years, most customers Frequency=1
+        # So CLV ≈ Monetary × 0.5
+        # We replicate this: use total payment as Monetary, frequency = n_orders,
+        # and assume a 2-year observation window (matching training).
+        payment_vals = pd.to_numeric(delivered["payment_value"], errors="coerce").dropna()
+        monetary = float(payment_vals.sum()) if len(payment_vals) > 0 else 0
+        frequency = int(delivered["order_id"].nunique()) if "order_id" in delivered.columns else 1
+        TRAINING_DURATION_YEARS = 2.0  # Olist dataset ≈ 2 years
+        clv = monetary * (frequency / TRAINING_DURATION_YEARS)
+        
+        features = {
+            "Recency": recency,
+            "avg_review_score_full": review,
+            "avg_delivery_days": delivery_days,
+            "avg_installments": installments,
+            "CLV_estimate": clv,
+        }
+        
+        logger.info(f"Computed features directly from {len(orders)} order(s): {features}")
+        return features
 
     def predict_from_raw_orders(self, orders: List[Dict]) -> Dict:
         """
@@ -367,95 +389,24 @@ class SegmentationAPI:
         if not orders:
             raise ValueError("No orders provided")
 
-        df = pd.DataFrame(orders)
-        if "customer_unique_id" not in df.columns:
-            raise ValueError("Missing customer_unique_id in raw orders")
-
-        customer_ids = df["customer_unique_id"].dropna().unique().tolist()
+        # Validate customer_unique_id
+        customer_ids = list({o.get("customer_unique_id") for o in orders if o.get("customer_unique_id")})
         if len(customer_ids) != 1:
             raise ValueError(f"Raw prediction expects exactly 1 customer_unique_id, got {len(customer_ids)}")
-
-        # Convert dates to datetime where possible
-        for col in [
-            "order_purchase_timestamp",
-            "order_delivered_customer_date",
-            "order_estimated_delivery_date",
-            "review_creation_date",
-        ]:
-            if col in df.columns:
-                df[col] = pd.to_datetime(df[col], format="mixed", errors="coerce")
-
-        # Generate historical orders to ensure proper RFM calculation
-        base_order = orders[0]
-        
-        # Debug: Log base order before generating historical orders
-        logger.info(f"Base order: {base_order}")
-        logger.info(f"Payment value from base order: {base_order.get('payment_value')}")
-        logger.info(f"Order date from base order: {base_order.get('order_purchase_timestamp')}")
-        logger.info(f"Review score from base order: {base_order.get('review_score')}")
-
-        historical_orders = self._generate_historical_orders(base_order)
-        logger.info(f"Generated {len(historical_orders)} historical orders")
-        
-        # Combine current order with historical orders
-        all_orders = historical_orders + orders
-        df_full = pd.DataFrame(all_orders)
-        
-        # Debug: Check order statuses and payment values
-        logger.info(f"All orders statuses: {df_full['order_status'].value_counts().to_dict()}")
-        logger.info(f"All payment values: {df_full['payment_value'].tolist()}")
-        logger.info(f"All order dates: {df_full['order_purchase_timestamp'].tolist()}")
-        
-        # Convert dates for the full dataset
-        for col in [
-            "order_purchase_timestamp",
-            "order_delivered_customer_date",
-            "order_estimated_delivery_date",
-            "review_creation_date",
-        ]:
-            if col in df_full.columns:
-                df_full[col] = pd.to_datetime(df_full[col], format="mixed", errors="coerce")
-
-        engineer = FeatureEngineer(self.config.get())
-        df_features = engineer.engineer_features(df_full)
-        
-        # Debug: Log RFM features specifically
-        logger.info(f"Generated {len(historical_orders)} historical orders")
-        logger.info(f"Total orders for RFM: {len(df_full)}")
-        logger.info(f"Features engineered shape: {df_features.shape}")
-        
-        if not df_features.empty:
-            customer_row = df_features.iloc[0]
-            rfm_features = {
-                'Recency': customer_row.get('Recency', 'N/A'),
-                'Frequency': customer_row.get('Frequency', 'N/A'), 
-                'Monetary': customer_row.get('Monetary', 'N/A')
-            }
-            logger.info(f"RFM features for customer: {rfm_features}")
-
-        # Extract feature vector for the single customer
         customer_id = customer_ids[0]
-        row = df_features[df_features["customer_unique_id"] == customer_id]
-        if row.empty:
-            raise ValueError("Could not compute features for customer_unique_id")
 
-        row = row.iloc[0]
-        feature_cols = self.pipeline["feature_cols"]
-        features = {}
-        for col in feature_cols:
-            val = float(row[col])
-            if not np.isfinite(val):
-                raise ValueError(
-                    f"Engineered feature '{col}' is invalid (NaN/inf). "
-                    "Provide more raw data (more orders) and/or required fields (delivery/review/geo)."
-                )
-            features[col] = val
+        logger.info(f"Predicting for customer {customer_id} with {len(orders)} order(s)")
+        logger.info(f"Order details: payment={orders[0].get('payment_value')}, "
+                    f"review={orders[0].get('review_score')}, "
+                    f"installments={orders[0].get('payment_installments')}")
 
-        # Debug: Log the engineered features
-        logger.info(f"Engineered features for customer {customer_id}: {features}")
+        # Compute the 5 features directly from the orders (no synthetic data)
+        features = self._compute_features_from_orders(orders)
         
+        # Predict
         result = self.predict_segment(features)
-        logger.info(f"Prediction result: {result}")
+        logger.info(f"Prediction result: cluster={result['cluster']}, "
+                    f"segment={result['segment_name']}, confidence={result['confidence']:.4f}")
         
         result["customer_id"] = customer_id
         result["engineered_features"] = features
@@ -1114,7 +1065,7 @@ def get_model_info():
         "feature_cols": segmentation_api.pipeline['feature_cols'],
         "cluster_names": segmentation_api.pipeline['cluster_names'],
         "segment_actions": segmentation_api.pipeline['segment_actions'],
-        "n_components_pca": segmentation_api.pipeline['n_components'],
+        "n_components_pca": segmentation_api.pipeline.get('n_comp', segmentation_api.pipeline.get('n_components', 'N/A')),
     }
 
 

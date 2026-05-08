@@ -914,102 +914,168 @@
 
         // Multiple example scenarios for different customer segments
         function loadExample() {
+            const today = new Date();
+            
+            // Helper to subtract days
+            function subtractDays(date, days) {
+                const result = new Date(date);
+                result.setDate(result.getDate() - days);
+                return result.toISOString().split('T')[0];
+            }
+            
+            // Helper to get time, with variation
+            function randomTime() {
+                const hours = String(Math.floor(Math.random() * 23)).padStart(2, '0');
+                const mins = String(Math.floor(Math.random() * 59)).padStart(2, '0');
+                return `${hours}:${mins}`;
+            }
+            
             const examples = [
                 {
-                    name: "Client Premium",
+                    name: "Client A - Achat moyen",
                     data: {
-                        order_id: 'ORDER-2024-001',
-                        customer_unique_id: 'CUST-PREMIUM',
+                        order_id: 'ORDER-2023-MEDIUM',
+                        customer_unique_id: 'CUST-REGULAR',
                         order_status: 'delivered',
-                        order_purchase_date: '2024-01-15',
-                        order_purchase_time: '14:30',
-                        payment_value: '850.50',
-                        price: '750.00',
+                        order_purchase_date: subtractDays(today, 306),
+                        order_purchase_time: '10:00',
+                        payment_value: '1.50',
+                        price: '1.20',
                         super_categorie: 'electronics',
-                        freight_value: '25.00',
-                        payment_installments: '8',
-                        order_approved_date: '2024-01-15',
-                        order_approved_time: '14:35',
+                        freight_value: '0.15',
+                        payment_installments: '5',
+                        order_approved_date: subtractDays(today, 306),
+                        order_approved_time: '10:15',
                         customer_lat: '-23.5505',
                         customer_lng: '-46.6333',
-                        order_estimated_delivery_date: '2024-01-20',
+                        order_estimated_delivery_date: subtractDays(today, 292),
                         order_estimated_delivery_time: '23:59',
-                        order_delivered_customer_date: '2024-01-18',
-                        order_delivered_customer_time: '10:00',
-                        order_delivered_carrier_date: '2024-01-17',
-                        order_delivered_carrier_time: '08:00',
-                        review_score: '5',
-                        review_creation_date: '2024-01-22',
-                        review_creation_time: '15:30'
-                    }
-                },
-                {
-                    name: "Client Déçu",
-                    data: {
-                        order_id: 'ORDER-2024-002',
-                        customer_unique_id: 'CUST-UNHAPPY',
-                        order_status: 'delivered',
-                        order_purchase_date: '2023-12-01',
-                        order_purchase_time: '09:15',
-                        payment_value: '45.99',
-                        price: '35.00',
-                        super_categorie: 'other',
-                        freight_value: '10.99',
-                        payment_installments: '1',
-                        order_approved_date: '2023-12-01',
-                        order_approved_time: '09:30',
-                        customer_lat: '-23.5505',
-                        customer_lng: '-46.6333',
-                        order_estimated_delivery_date: '2023-12-10',
-                        order_estimated_delivery_time: '23:59',
-                        order_delivered_customer_date: '2023-12-15',
-                        order_delivered_customer_time: '16:00',
-                        order_delivered_carrier_date: '2023-12-08',
-                        order_delivered_carrier_time: '14:00',
-                        review_score: '1',
-                        review_creation_date: '2023-12-20',
+                        order_delivered_customer_date: subtractDays(today, 289),
+                        order_delivered_customer_time: '14:00',
+                        order_delivered_carrier_date: subtractDays(today, 294),
+                        order_delivered_carrier_time: '10:00',
+                        review_score: '3',
+                        review_creation_date: subtractDays(today, 284),
                         review_creation_time: '11:00'
                     }
                 },
                 {
-                    name: "Client Dormant",
+                    name: "Client B - Petit achat satisfait",
                     data: {
-                        order_id: 'ORDER-2024-003',
-                        customer_unique_id: 'CUST-DORMANT',
+                        order_id: 'ORDER-2023-DISSATISFIED',
+                        customer_unique_id: 'CUST-DISSATISFIED',
                         order_status: 'delivered',
-                        order_purchase_date: '2023-06-15',
-                        order_purchase_time: '20:45',
-                        payment_value: '120.00',
-                        price: '100.00',
-                        super_categorie: 'home',
-                        freight_value: '20.00',
-                        payment_installments: '3',
-                        order_approved_date: '2023-06-15',
-                        order_approved_time: '21:00',
+                        order_purchase_date: subtractDays(today, 303),
+                        order_purchase_time: '15:30',
+                        payment_value: '0.50',
+                        price: '0.40',
+                        super_categorie: 'other',
+                        freight_value: '0.05',
+                        payment_installments: '1',
+                        order_approved_date: subtractDays(today, 303),
+                        order_approved_time: '15:45',
                         customer_lat: '-23.5505',
                         customer_lng: '-46.6333',
-                        order_estimated_delivery_date: '2023-06-25',
+                        order_estimated_delivery_date: subtractDays(today, 289),
                         order_estimated_delivery_time: '23:59',
-                        order_delivered_customer_date: '2023-06-30',
-                        order_delivered_customer_time: '14:00',
-                        order_delivered_carrier_date: '2023-06-22',
-                        order_delivered_carrier_time: '10:00',
-                        review_score: '3',
-                        review_creation_date: '2023-07-05',
+                        order_delivered_customer_date: subtractDays(today, 286),
+                        order_delivered_customer_time: '16:00',
+                        order_delivered_carrier_date: subtractDays(today, 288),
+                        order_delivered_carrier_time: '12:00',
+                        review_score: '5',
+                        review_creation_date: subtractDays(today, 281),
                         review_creation_time: '09:00'
+                    }
+                },
+                {
+                    name: "Client C - Achat recent",
+                    data: {
+                        order_id: 'ORDER-2024-DORMANT',
+                        customer_unique_id: 'CUST-DORMANT',
+                        order_status: 'delivered',
+                        order_purchase_date: subtractDays(today, 127),
+                        order_purchase_time: '12:00',
+                        payment_value: '0.60',
+                        price: '0.50',
+                        super_categorie: 'home',
+                        freight_value: '0.08',
+                        payment_installments: '2',
+                        order_approved_date: subtractDays(today, 127),
+                        order_approved_time: '12:15',
+                        customer_lat: '-23.5505',
+                        customer_lng: '-46.6333',
+                        order_estimated_delivery_date: subtractDays(today, 123),
+                        order_estimated_delivery_time: '23:59',
+                        order_delivered_customer_date: subtractDays(today, 121),
+                        order_delivered_customer_time: '10:00',
+                        order_delivered_carrier_date: subtractDays(today, 124),
+                        order_delivered_carrier_time: '08:00',
+                        review_score: '4',
+                        review_creation_date: subtractDays(today, 118),
+                        review_creation_time: '14:00'
+                    }
+                },
+                {
+                    name: "Client D - Livraison lente",
+                    data: {
+                        order_id: 'ORDER-2023-PREMIUM-CREDIT',
+                        customer_unique_id: 'CUST-PREMIUM-CREDIT',
+                        order_status: 'delivered',
+                        order_purchase_date: subtractDays(today, 300),
+                        order_purchase_time: '08:00',
+                        payment_value: '2.00',
+                        price: '1.80',
+                        super_categorie: 'electronics',
+                        freight_value: '0.15',
+                        payment_installments: '1',
+                        order_approved_date: subtractDays(today, 300),
+                        order_approved_time: '08:30',
+                        customer_lat: '-23.5505',
+                        customer_lng: '-46.6333',
+                        order_estimated_delivery_date: subtractDays(today, 283),
+                        order_estimated_delivery_time: '23:59',
+                        order_delivered_customer_date: subtractDays(today, 270),
+                        order_delivered_customer_time: '18:00',
+                        order_delivered_carrier_date: subtractDays(today, 274),
+                        order_delivered_carrier_time: '14:00',
+                        review_score: '2',
+                        review_creation_date: subtractDays(today, 265),
+                        review_creation_time: '10:00'
+                    }
+                },
+                {
+                    name: "Client E - Gros achat",
+                    data: {
+                        order_id: 'ORDER-2023-PROMISING',
+                        customer_unique_id: 'CUST-PROMISING',
+                        order_status: 'delivered',
+                        order_purchase_date: subtractDays(today, 312),
+                        order_purchase_time: '14:00',
+                        payment_value: '8.00',
+                        price: '7.50',
+                        super_categorie: 'electronics',
+                        freight_value: '0.30',
+                        payment_installments: '5',
+                        order_approved_date: subtractDays(today, 312),
+                        order_approved_time: '14:30',
+                        customer_lat: '-23.5505',
+                        customer_lng: '-46.6333',
+                        order_estimated_delivery_date: subtractDays(today, 305),
+                        order_estimated_delivery_time: '23:59',
+                        order_delivered_customer_date: subtractDays(today, 300),
+                        order_delivered_customer_time: '16:00',
+                        order_delivered_carrier_date: subtractDays(today, 302),
+                        order_delivered_carrier_time: '10:00',
+                        review_score: '5',
+                        review_creation_date: subtractDays(today, 297),
+                        review_creation_time: '15:00'
                     }
                 }
             ];
             
-            // Rotate through examples
+            // Rotate through examples randomly
             const currentExample = examples[Math.floor(Math.random() * examples.length)];
             const exampleData = currentExample.data;
-            
-            // Update button text to show which example is loaded
-            const loadButton = document.querySelector('button[onclick="loadExample()"]');
-            if (loadButton) {
-                loadButton.textContent = `Charger: ${currentExample.name}`;
-            }
 
             Object.entries(exampleData).forEach(([key, value]) => {
                 const input = document.querySelector(`[name="${key}"]`);

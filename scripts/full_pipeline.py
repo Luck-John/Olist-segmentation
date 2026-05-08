@@ -41,8 +41,7 @@ SEGMENT_NAMES = {
     1: "OKOK Clients Déçus",
     2: "OKOK Dormants Faible Valeur",
     3: "OKOK Premium Crédit",
-    4: "OKOK Nouveaux Prometteurs",
-    5: "OKOK Elite Loyale"
+    4: "OKOK Nouveaux Prometteurs"
 }
 
 SEGMENT_ACTIONS = {
@@ -50,8 +49,7 @@ SEGMENT_ACTIONS = {
     1: "Immediate Contact + Refund Offer + Quality Inquiry",
     2: "Win-back Campaign -20% or Progressive Disengagement",
     3: "VIP Offers + Increased Credit Limit + Early Access",
-    4: "Welcome Program + Product Recommendations",
-    5: "Exclusive Perks + Personalized Services"
+    4: "Welcome Program + Product Recommendations"
 }
 
 print("=" * 70)

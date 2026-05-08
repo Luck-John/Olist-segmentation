@@ -342,7 +342,7 @@ class FeatureEngineer:
                     df[col] = np.nan
         return df
     
-    def engineer_features(self, df: pd.DataFrame) -> pd.DataFrame:
+    def engineer_features(self, df: pd.DataFrame, snapshot_date: pd.Timestamp = None) -> pd.DataFrame:
         """
         Main pipeline to engineer ONLY the 5 active features needed for clustering.
         
@@ -355,6 +355,8 @@ class FeatureEngineer:
         
         Args:
             df: Preprocessed DataFrame
+            snapshot_date: Reference date for RFM calculation. If None, uses max(order_purchase_timestamp) + 1 day.
+                          For API single-order predictions, pass today's date.
         
         Returns:
             DataFrame with 5 engineered features
@@ -362,7 +364,10 @@ class FeatureEngineer:
         df = self._ensure_raw_columns(df)
         
         # Calculate snapshot date
-        snapshot_date = df['order_purchase_timestamp'].max() + pd.Timedelta(days=1)
+        if snapshot_date is None:
+            snapshot_date = df['order_purchase_timestamp'].max() + pd.Timedelta(days=1)
+        else:
+            snapshot_date = pd.Timestamp(snapshot_date)
         dataset_duration = (df['order_purchase_timestamp'].max() - df['order_purchase_timestamp'].min()).days
         if dataset_duration <= 0:
             dataset_duration = 1
