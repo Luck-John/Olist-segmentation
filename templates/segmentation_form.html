@@ -1,298 +1,765 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Segmentation Clients Olist</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f4f8;color:#1a3a52;min-height:100vh;padding:2rem 1rem}
-.container{max-width:980px;margin:0 auto}
-.header{background:linear-gradient(135deg,#0066cc,#003d7a);color:#fff;padding:1.8rem 2rem;border-radius:12px;margin-bottom:1.8rem;box-shadow:0 4px 15px rgba(0,102,204,.2);display:flex;align-items:center;justify-content:space-between}
-.header h1{font-size:1.7rem;font-weight:700}
-.header p{opacity:.85;font-size:.88rem;margin-top:.3rem}
-.header img{height:50px}
-.card{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.08);padding:1.8rem;margin-bottom:1.4rem}
-.card-title{color:#0066cc;font-size:1.1rem;font-weight:700;margin-bottom:1.2rem;padding-bottom:.6rem;border-bottom:2px solid #e8f0fb}
-.tabs{display:flex;gap:.5rem;margin-bottom:1.4rem;background:#eef3fa;padding:.35rem;border-radius:10px}
-.tab{flex:1;padding:.65rem 1rem;border:none;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;color:#5a7a9a}
-.tab.active{background:#fff;color:#0066cc;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-.tab-panel{display:none}
-.tab-panel.active{display:block}
-.form-group{margin-bottom:1rem}
-.form-group label{display:block;margin-bottom:.35rem;font-weight:600;color:#2c3e50;font-size:.85rem;text-transform:uppercase;letter-spacing:.3px}
-.form-group input,.form-group select{width:100%;padding:.65rem .85rem;border:2px solid #dce8f5;border-radius:8px;font-size:.92rem;transition:border-color .2s,box-shadow .2s;background:#fff;color:#1a3a52}
-.form-group input:focus,.form-group select:focus{outline:none;border-color:#0066cc;box-shadow:0 0 0 3px rgba(0,102,204,.1)}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.9rem}
-.dt-pair{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
-.btn{padding:.68rem 1.3rem;border:none;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s}
-.btn-primary{background:linear-gradient(135deg,#0066cc,#0052a3);color:#fff;box-shadow:0 3px 10px rgba(0,102,204,.25)}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(0,102,204,.35)}
-.btn-secondary{background:#eef3fa;color:#0066cc;border:2px solid #b8d4f0}
-.btn-secondary:hover{background:#dce8f5}
-.btn-success{background:linear-gradient(135deg,#1a7a3a,#145f2c);color:#fff;box-shadow:0 3px 10px rgba(26,122,58,.25)}
-.btn-success:hover{transform:translateY(-1px)}
-.btn-add{background:#0a5fa8;color:#fff;padding:.4rem .85rem;font-size:.83rem}
-.btn-remove{background:#c0392b;color:#fff;padding:.3rem .65rem;font-size:.8rem;border-radius:6px;border:none;cursor:pointer}
-.btn-group{display:flex;gap:.6rem;margin-top:1.2rem;flex-wrap:wrap}
-.order-card{border:2px solid #dce8f5;border-radius:10px;padding:1.2rem;margin-bottom:.9rem;background:#f8fbff}
-.order-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem}
-.order-title{color:#0066cc;font-weight:700;font-size:.92rem}
-.lookup-box{background:#f0f6ff;border:2px solid #c5daf5;border-radius:10px;padding:1.1rem;margin-bottom:1.2rem}
-.lookup-box label{display:block;font-weight:700;color:#0052a3;font-size:.85rem;text-transform:uppercase;margin-bottom:.4rem}
-.lookup-row{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap}
-.lookup-row input{flex:1;min-width:220px;padding:.65rem .85rem;border:2px solid #c5daf5;border-radius:8px;font-size:.92rem}
-.lookup-status{margin-top:.7rem;font-size:.88rem;min-height:1.4em}
-.badge{display:inline-block;padding:.3rem .8rem;border-radius:16px;font-size:.82rem;font-weight:600}
-.badge-new{background:#fff3cd;color:#7a5c00;border:1px solid #f5d87a}
-.badge-existing{background:#d4f0dc;color:#155724;border:1px solid #7acf95}
-.info-banner{padding:.85rem 1rem;border-radius:8px;border-left:4px solid;margin-bottom:1rem;font-size:.88rem;line-height:1.5}
-.info-banner.info{background:#e8f1fd;border-color:#0066cc;color:#0d3c7a}
-.info-banner.warning{background:#fff8e1;border-color:#e6a817;color:#6d4c00}
-.info-banner.error{background:#fdecea;border-color:#c0392b;color:#7a1c10;display:none}
-.info-banner.error.show{display:block}
-.separator{border:none;border-top:2px dashed #c5daf5;margin:1.2rem 0}
-.loading{display:none;text-align:center;padding:1.4rem}
-.spinner{display:inline-block;width:26px;height:26px;border:3px solid #dce8f5;border-top-color:#0066cc;border-radius:50%;animation:spin .6s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.result-card{display:none;background:#fff;border:2px solid #0066cc;border-radius:12px;padding:1.6rem;margin-top:1rem}
-.result-card.error-state{border-color:#c0392b;background:#fff8f8}
-.error-card-title{color:#c0392b;font-size:1rem;font-weight:700;margin-bottom:.7rem;padding-bottom:.5rem;border-bottom:2px solid #f5c6c6}
-.error-card-msg{color:#7a1c10;font-size:.92rem;line-height:1.6;background:#fdecea;border:1px solid #f5c6c6;border-radius:8px;padding:.9rem 1rem}
-.error-tip{margin-top:.7rem;font-size:.83rem;color:#a04040;background:#fff0f0;border-left:3px solid #c0392b;padding:.6rem .8rem;border-radius:0 6px 6px 0}
-.result-card.show{display:block}
-.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:.75rem;margin-bottom:1.1rem}
-.result-item{background:#f0f6ff;padding:.9rem;border-radius:8px;border-left:3px solid #0066cc;text-align:center}
-.result-label{color:#5a7a9a;font-size:.75rem;font-weight:700;text-transform:uppercase;margin-bottom:.3rem}
-.result-value{color:#003d7a;font-size:1.15rem;font-weight:700}
-.segment-pill{display:inline-block;padding:.45rem 1.2rem;border-radius:20px;background:#0066cc;color:#fff;font-weight:700;font-size:1rem;margin-bottom:.9rem}
-.action-box{background:#f0faf4;border:2px solid #7acf95;border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem}
-.action-label{font-weight:700;color:#155724;font-size:.82rem;text-transform:uppercase;margin-bottom:.3rem}
-.conf-bar{height:7px;background:#dce8f5;border-radius:4px;overflow:hidden;margin-top:.4rem}
-.conf-fill{height:100%;background:linear-gradient(90deg,#0066cc,#28a745);transition:width .4s}
-.feats-title{font-weight:700;color:#0066cc;font-size:.82rem;text-transform:uppercase;margin-bottom:.6rem}
-.feats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(95px,1fr));gap:.5rem}
-.feat{background:#f8fbff;border:1px solid #dce8f5;padding:.6rem;border-radius:6px;text-align:center}
-.feat-name{font-size:.72rem;color:#5a7a9a;margin-bottom:.2rem;font-weight:600}
-.feat-val{font-size:.9rem;font-weight:700;color:#003d7a}
-.meta-info{margin-bottom:.9rem;display:flex;gap:.5rem;flex-wrap:wrap}
-@media(max-width:600px){.header{flex-direction:column;gap:.8rem;text-align:center}.btn-group{flex-direction:column}}
-</style>
-</head>
-<body>
-<div class="container">
-
-  <div class="header">
-    <div>
-      <h1>Segmentation Clients Olist</h1>
-      <p>Prediction de segment client avec fusion automatique de l'historique</p>
-    </div>
-    <img src="/static/olist.png" alt="Olist" onerror="this.style.display='none'">
-  </div>
-
-  <div class="card">
-    <div class="tabs">
-      <button class="tab active" id="tab-smart" onclick="switchTab('smart')">Mode Commandes</button>
-      <button class="tab" id="tab-direct" onclick="switchTab('direct')">Mode Historique Direct</button>
-    </div>
-
-    <!-- ===== TAB 1: SMART ===== -->
-    <div id="panel-smart" class="tab-panel active">
-
-      <div class="info-banner info">
-        Renseignez les commandes du client. Si vous indiquez un ID client existant en base,
-        son historique sera automatiquement fusionné avec les nouvelles commandes saisies.
-        Pour un nouveau client, la prediction se fait uniquement sur les commandes saisies.
-      </div>
-
-      <!-- Lookup -->
-      <div class="lookup-box">
-        <label>Identification du client (optionnel)</label>
-        <div class="lookup-row">
-          <input type="text" id="smartCustId" autocomplete="off">
-          <button class="btn btn-secondary" onclick="checkCustomer()">Verifier en base</button>
-        </div>
-        <div class="lookup-status" id="lookupStatus"></div>
-      </div>
-
-      <!-- New orders section -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem">
-        <strong style="color:#0052a3;font-size:.95rem" id="newOrdersLabel">Nouvelles commandes</strong>
-        <button class="btn btn-add" onclick="addOrder()">Ajouter une commande</button>
-      </div>
-
-      <div id="ordersList"></div>
-
-      <div class="info-banner warning" id="fusionBanner" style="display:none">
-        Le client existe en base. Les commandes saisies ci-dessus seront ajoutees a son historique pour la prediction.
-      </div>
-
-      <div class="btn-group">
-        <button class="btn btn-secondary" onclick="resetSmartForm()">Reinitialiser</button>
-        <button class="btn btn-secondary" onclick="loadExample()">Charger un exemple</button>
-        <button class="btn btn-secondary" onclick="loadExampleDirect()" style="font-size:.83rem">Exemple ID client</button>
-        <button class="btn btn-primary" onclick="submitSmart()">Predire</button>
-      </div>
-    </div>
-
-    <!-- ===== TAB 2: DIRECT ===== -->
-    <div id="panel-direct" class="tab-panel">
-
-      <div class="info-banner info">
-        Entrez l'identifiant d'un client existant en base. La prediction utilisera
-        directement tout son historique de commandes, sans avoir a saisir quoi que ce soit.
-      </div>
-
-      <div class="form-group">
-        <label>ID Client (customer_unique_id)</label>
-        <input type="text" id="directCustId" autocomplete="off">
-      </div>
-
-      <div class="lookup-status" id="directStatus" style="margin-bottom:.8rem"></div>
-
-      <div class="btn-group">
-        <button class="btn btn-secondary" onclick="document.getElementById('directCustId').value='';document.getElementById('directStatus').innerHTML=''">Effacer</button>
-        <button class="btn btn-success" onclick="submitDirect()">Predire depuis l'historique</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="loading" id="loading">
-    <div class="spinner"></div>
-    <p style="margin-top:.6rem;color:#5a7a9a;font-size:.9rem">Analyse en cours...</p>
-  </div>
-
-
-
-  <!-- Result / Error card (shared) -->
-  <div class="result-card" id="resultCard">
-    <!-- Error state -->
-    <div id="errorContent" style="display:none">
-      <div class="error-card-title">Erreur</div>
-      <div class="error-card-msg" id="errorMsg"></div>
-      <div class="error-tip" id="errorTip"></div>
-    </div>
-    <!-- Success state -->
-    <div id="successContent">
-      <div class="card-title">Resultat de la prediction</div>
-      <div class="meta-info" id="metaInfo"></div>
-      <div class="segment-pill" id="rSegment">-</div>
-      <div class="result-grid">
-        <div class="result-item">
-          <div class="result-label">Cluster</div>
-          <div class="result-value" id="rCluster">-</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">Confiance</div>
-          <div class="result-value" id="rConf">-</div>
-          <div class="conf-bar"><div class="conf-fill" id="rConfBar" style="width:0%"></div></div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">Commandes utilisees</div>
-          <div class="result-value" id="rNOrders">-</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">Client ID</div>
-          <div class="result-value" id="rCustId" style="font-size:.78rem;word-break:break-all">-</div>
-        </div>
-      </div>
-      <div class="action-box">
-        <div class="action-label">Action recommandee</div>
-        <div id="rAction" style="color:#155724;font-size:.95rem">-</div>
-      </div>
-      <div class="feats-title">Features calculees</div>
-      <div class="feats-grid">
-        <div class="feat"><div class="feat-name">Recency (j)</div><div class="feat-val" id="fRecency">-</div></div>
-        <div class="feat"><div class="feat-name">Review</div><div class="feat-val" id="fReview">-</div></div>
-        <div class="feat"><div class="feat-name">Livraison (j)</div><div class="feat-val" id="fDelivery">-</div></div>
-        <div class="feat"><div class="feat-name">Versements</div><div class="feat-val" id="fInstall">-</div></div>
-        <div class="feat"><div class="feat-name">CLV (BRL)</div><div class="feat-val" id="fClv">-</div></div>
-      </div>
-    </div>
-  </div>
-
-</div>
-<script>
-let orderCount = 0;
-let isExistingCustomer = false;
-
-// ---- Tabs ----
-function switchTab(t) {
-  ['smart','direct'].forEach(id => {
-    document.getElementById('panel-'+id).classList.toggle('active', id===t);
-    document.getElementById('tab-'+id).classList.toggle('active', id===t);
-  });
-  hideResult(); clearError();
-}
-
-// ---- Customer lookup ----
-async function checkCustomer() {
-  const id = document.getElementById('smartCustId').value.trim();
-  if (!id) { showError('Veuillez entrer un ID client.'); return; }
-  const el = document.getElementById('lookupStatus');
-  el.textContent = 'Verification...';
-  clearError();
-  try {
-    const r = await fetch('/customer/'+encodeURIComponent(id)+'/orders');
-    const d = await r.json();
-    isExistingCustomer = !d.is_new_customer;
-    if (isExistingCustomer) {
-      el.innerHTML = '<span class="badge badge-existing">Client existant — '+d.orders.length+' commande(s) en base. Son historique sera fusionne avec les nouvelles commandes.</span>';
-      document.getElementById('fusionBanner').style.display = 'block';
-      document.getElementById('newOrdersLabel').textContent = 'Nouvelles commandes a ajouter a l\'historique (optionnel)';
-    } else {
-      el.innerHTML = '<span class="badge badge-new">Nouveau client — aucun historique en base. Prediction sur les commandes saisies uniquement.</span>';
-      document.getElementById('fusionBanner').style.display = 'none';
-      document.getElementById('newOrdersLabel').textContent = 'Nouvelles commandes';
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Segmentation Clients Olist</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
     }
-  } catch(e) {
-    el.textContent = 'Erreur: ' + e.message;
-    isExistingCustomer = false;
-  }
-}
 
-// ---- Order cards ----
-function addOrder(data) {
-  const idx = orderCount++;
-  const list = document.getElementById('ordersList');
-  const d = document.createElement('div');
-  d.className = 'order-card'; d.id = 'order-'+idx;
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f4f8;
+      color: #1a3a52;
+      min-height: 100vh;
+      padding: 2rem 1rem
+    }
 
-  const pDate = data?.order_purchase_timestamp
-    ? data.order_purchase_timestamp.replace(' ',':').split(':')[0]+'-'
-      +data.order_purchase_timestamp.replace(' ',':').split(':')[1]+'-'
-      // simpler:
-    : '';
-  // Parse dates cleanly
-  let pD='', pT='', dD='', dT='';
-  if (data?.order_purchase_timestamp) {
-    const s = data.order_purchase_timestamp.replace('T',' ');
-    pD = s.split(' ')[0]||''; pT = (s.split(' ')[1]||'').substring(0,5);
-  }
-  if (data?.order_delivered_customer_date) {
-    const s = data.order_delivered_customer_date.replace('T',' ');
-    dD = s.split(' ')[0]||''; dT = (s.split(' ')[1]||'').substring(0,5);
-  }
-  const rev = data?.review_score||'';
-  const opts = [1,2,3,4,5].map(v=>`<option value="${v}"${rev==v?' selected':''}>${v}</option>`).join('');
-  const num = list.children.length+1;
-  d.innerHTML = `
+    .container {
+      max-width: 980px;
+      margin: 0 auto
+    }
+
+    .header {
+      background: linear-gradient(135deg, #0066cc, #003d7a);
+      color: #fff;
+      padding: 1.8rem 2rem;
+      border-radius: 12px;
+      margin-bottom: 1.8rem;
+      box-shadow: 0 4px 15px rgba(0, 102, 204, .2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .header h1 {
+      font-size: 1.7rem;
+      font-weight: 700
+    }
+
+    .header p {
+      opacity: .85;
+      font-size: .88rem;
+      margin-top: .3rem
+    }
+
+    .header img {
+      height: 50px
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .08);
+      padding: 1.8rem;
+      margin-bottom: 1.4rem
+    }
+
+    .card-title {
+      color: #0066cc;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 1.2rem;
+      padding-bottom: .6rem;
+      border-bottom: 2px solid #e8f0fb
+    }
+
+    .tabs {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1.4rem;
+      background: #eef3fa;
+      padding: .35rem;
+      border-radius: 10px
+    }
+
+    .tab {
+      flex: 1;
+      padding: .65rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      background: transparent;
+      color: #5a7a9a
+    }
+
+    .tab.active {
+      background: #fff;
+      color: #0066cc;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .1)
+    }
+
+    .tab-panel {
+      display: none
+    }
+
+    .tab-panel.active {
+      display: block
+    }
+
+    .form-group {
+      margin-bottom: 1rem
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: .35rem;
+      font-weight: 600;
+      color: #2c3e50;
+      font-size: .85rem;
+      text-transform: uppercase;
+      letter-spacing: .3px
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: .65rem .85rem;
+      border: 2px solid #dce8f5;
+      border-radius: 8px;
+      font-size: .92rem;
+      transition: border-color .2s, box-shadow .2s;
+      background: #fff;
+      color: #1a3a52
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #0066cc;
+      box-shadow: 0 0 0 3px rgba(0, 102, 204, .1)
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: .9rem
+    }
+
+    .dt-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .4rem
+    }
+
+    .btn {
+      padding: .68rem 1.3rem;
+      border: none;
+      border-radius: 8px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0066cc, #0052a3);
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(0, 102, 204, .25)
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 14px rgba(0, 102, 204, .35)
+    }
+
+    .btn-secondary {
+      background: #eef3fa;
+      color: #0066cc;
+      border: 2px solid #b8d4f0
+    }
+
+    .btn-secondary:hover {
+      background: #dce8f5
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #1a7a3a, #145f2c);
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(26, 122, 58, .25)
+    }
+
+    .btn-success:hover {
+      transform: translateY(-1px)
+    }
+
+    .btn-add {
+      background: #0a5fa8;
+      color: #fff;
+      padding: .4rem .85rem;
+      font-size: .83rem
+    }
+
+    .btn-remove {
+      background: #c0392b;
+      color: #fff;
+      padding: .3rem .65rem;
+      font-size: .8rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer
+    }
+
+    .btn-group {
+      display: flex;
+      gap: .6rem;
+      margin-top: 1.2rem;
+      flex-wrap: wrap
+    }
+
+    .order-card {
+      border: 2px solid #dce8f5;
+      border-radius: 10px;
+      padding: 1.2rem;
+      margin-bottom: .9rem;
+      background: #f8fbff
+    }
+
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: .9rem
+    }
+
+    .order-title {
+      color: #0066cc;
+      font-weight: 700;
+      font-size: .92rem
+    }
+
+    .lookup-box {
+      background: #f0f6ff;
+      border: 2px solid #c5daf5;
+      border-radius: 10px;
+      padding: 1.1rem;
+      margin-bottom: 1.2rem
+    }
+
+    .lookup-box label {
+      display: block;
+      font-weight: 700;
+      color: #0052a3;
+      font-size: .85rem;
+      text-transform: uppercase;
+      margin-bottom: .4rem
+    }
+
+    .lookup-row {
+      display: flex;
+      gap: .7rem;
+      align-items: center;
+      flex-wrap: wrap
+    }
+
+    .lookup-row input {
+      flex: 1;
+      min-width: 220px;
+      padding: .65rem .85rem;
+      border: 2px solid #c5daf5;
+      border-radius: 8px;
+      font-size: .92rem
+    }
+
+    .lookup-status {
+      margin-top: .7rem;
+      font-size: .88rem;
+      min-height: 1.4em
+    }
+
+    .badge {
+      display: inline-block;
+      padding: .3rem .8rem;
+      border-radius: 16px;
+      font-size: .82rem;
+      font-weight: 600
+    }
+
+    .badge-new {
+      background: #fff3cd;
+      color: #7a5c00;
+      border: 1px solid #f5d87a
+    }
+
+    .badge-existing {
+      background: #d4f0dc;
+      color: #155724;
+      border: 1px solid #7acf95
+    }
+
+    .info-banner {
+      padding: .85rem 1rem;
+      border-radius: 8px;
+      border-left: 4px solid;
+      margin-bottom: 1rem;
+      font-size: .88rem;
+      line-height: 1.5
+    }
+
+    .info-banner.info {
+      background: #e8f1fd;
+      border-color: #0066cc;
+      color: #0d3c7a
+    }
+
+    .info-banner.warning {
+      background: #fff8e1;
+      border-color: #e6a817;
+      color: #6d4c00
+    }
+
+    .info-banner.error {
+      background: #fdecea;
+      border-color: #c0392b;
+      color: #7a1c10;
+      display: none
+    }
+
+    .info-banner.error.show {
+      display: block
+    }
+
+    .separator {
+      border: none;
+      border-top: 2px dashed #c5daf5;
+      margin: 1.2rem 0
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 1.4rem
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 26px;
+      height: 26px;
+      border: 3px solid #dce8f5;
+      border-top-color: #0066cc;
+      border-radius: 50%;
+      animation: spin .6s linear infinite
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .result-card {
+      display: none;
+      background: #fff;
+      border: 2px solid #0066cc;
+      border-radius: 12px;
+      padding: 1.6rem;
+      margin-top: 1rem
+    }
+
+    .result-card.error-state {
+      border-color: #c0392b;
+      background: #fff8f8
+    }
+
+    .error-card-title {
+      color: #c0392b;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: .7rem;
+      padding-bottom: .5rem;
+      border-bottom: 2px solid #f5c6c6
+    }
+
+    .error-card-msg {
+      color: #7a1c10;
+      font-size: .92rem;
+      line-height: 1.6;
+      background: #fdecea;
+      border: 1px solid #f5c6c6;
+      border-radius: 8px;
+      padding: .9rem 1rem
+    }
+
+    .error-tip {
+      margin-top: .7rem;
+      font-size: .83rem;
+      color: #a04040;
+      background: #fff0f0;
+      border-left: 3px solid #c0392b;
+      padding: .6rem .8rem;
+      border-radius: 0 6px 6px 0
+    }
+
+    .result-card.show {
+      display: block
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: .75rem;
+      margin-bottom: 1.1rem
+    }
+
+    .result-item {
+      background: #f0f6ff;
+      padding: .9rem;
+      border-radius: 8px;
+      border-left: 3px solid #0066cc;
+      text-align: center
+    }
+
+    .result-label {
+      color: #5a7a9a;
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: .3rem
+    }
+
+    .result-value {
+      color: #003d7a;
+      font-size: 1.15rem;
+      font-weight: 700
+    }
+
+    .segment-pill {
+      display: inline-block;
+      padding: .45rem 1.2rem;
+      border-radius: 20px;
+      background: #0066cc;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: .9rem
+    }
+
+    .action-box {
+      background: #f0faf4;
+      border: 2px solid #7acf95;
+      border-radius: 8px;
+      padding: .9rem 1rem;
+      margin-bottom: 1rem
+    }
+
+    .action-label {
+      font-weight: 700;
+      color: #155724;
+      font-size: .82rem;
+      text-transform: uppercase;
+      margin-bottom: .3rem
+    }
+
+    .conf-bar {
+      height: 7px;
+      background: #dce8f5;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: .4rem
+    }
+
+    .conf-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0066cc, #28a745);
+      transition: width .4s
+    }
+
+    .feats-title {
+      font-weight: 700;
+      color: #0066cc;
+      font-size: .82rem;
+      text-transform: uppercase;
+      margin-bottom: .6rem
+    }
+
+    .feats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+      gap: .5rem
+    }
+
+    .feat {
+      background: #f8fbff;
+      border: 1px solid #dce8f5;
+      padding: .6rem;
+      border-radius: 6px;
+      text-align: center
+    }
+
+    .feat-name {
+      font-size: .72rem;
+      color: #5a7a9a;
+      margin-bottom: .2rem;
+      font-weight: 600
+    }
+
+    .feat-val {
+      font-size: .9rem;
+      font-weight: 700;
+      color: #003d7a
+    }
+
+    .meta-info {
+      margin-bottom: .9rem;
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap
+    }
+
+    @media(max-width:600px) {
+      .header {
+        flex-direction: column;
+        gap: .8rem;
+        text-align: center
+      }
+
+      .btn-group {
+        flex-direction: column
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="header">
+      <div>
+        <h1>Segmentation Clients Olist</h1>
+      </div>
+      <img src="/static/olist.png" alt="Olist" onerror="this.style.display='none'">
+    </div>
+
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" id="tab-smart" onclick="switchTab('smart')">Mode Commandes</button>
+        <button class="tab" id="tab-direct" onclick="switchTab('direct')">Mode Historique Direct</button>
+      </div>
+
+      <!-- ===== TAB 1: SMART ===== -->
+      <div id="panel-smart" class="tab-panel active">
+
+        <div class="info-banner info">
+          Renseignez les commandes du client. Si vous indiquez un ID client existant en base,
+          son historique sera automatiquement fusionné avec les nouvelles commandes saisies.
+          Pour un nouveau client, la prediction se fait uniquement sur les commandes saisies.
+        </div>
+
+        <!-- Lookup -->
+        <div class="lookup-box">
+          <label>Identification du client (optionnel)</label>
+          <div class="lookup-row">
+            <input type="text" id="smartCustId" autocomplete="off">
+            <button class="btn btn-secondary" onclick="checkCustomer()">Verifier en base</button>
+          </div>
+          <div class="lookup-status" id="lookupStatus"></div>
+        </div>
+
+        <!-- New orders section -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem">
+          <strong style="color:#0052a3;font-size:.95rem" id="newOrdersLabel">Nouvelles commandes</strong>
+          <button class="btn btn-add" onclick="addOrder()">Ajouter une commande</button>
+        </div>
+
+        <div id="ordersList"></div>
+
+        <div class="info-banner warning" id="fusionBanner" style="display:none">
+          Le client existe en base. Les commandes saisies ci-dessus seront ajoutees a son historique pour la prediction.
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="resetSmartForm()">Reinitialiser</button>
+          <button class="btn btn-secondary" onclick="loadExample()">Charger un exemple</button>
+          <button class="btn btn-secondary" onclick="loadExampleDirect()" style="font-size:.83rem">Exemple ID
+            client</button>
+          <button class="btn btn-primary" onclick="submitSmart()">Predire</button>
+        </div>
+      </div>
+
+      <!-- ===== TAB 2: DIRECT ===== -->
+      <div id="panel-direct" class="tab-panel">
+
+        <div class="info-banner info">
+          Entrez l'identifiant d'un client existant en base. La prediction utilisera
+          directement tout son historique de commandes, sans avoir a saisir quoi que ce soit.
+        </div>
+
+        <div class="form-group">
+          <label>ID Client (customer_unique_id)</label>
+          <input type="text" id="directCustId" autocomplete="off">
+        </div>
+
+        <div class="lookup-status" id="directStatus" style="margin-bottom:.8rem"></div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary"
+            onclick="document.getElementById('directCustId').value='';document.getElementById('directStatus').innerHTML=''">Effacer</button>
+          <button class="btn btn-success" onclick="submitDirect()">Predire depuis l'historique</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p style="margin-top:.6rem;color:#5a7a9a;font-size:.9rem">Analyse en cours...</p>
+    </div>
+
+
+
+    <!-- Result / Error card (shared) -->
+    <div class="result-card" id="resultCard">
+      <!-- Error state -->
+      <div id="errorContent" style="display:none">
+        <div class="error-card-title">Erreur</div>
+        <div class="error-card-msg" id="errorMsg"></div>
+        <div class="error-tip" id="errorTip"></div>
+      </div>
+      <!-- Success state -->
+      <div id="successContent">
+        <div class="card-title">Resultat de la prediction</div>
+        <div class="meta-info" id="metaInfo"></div>
+        <div class="segment-pill" id="rSegment">-</div>
+        <div class="result-grid">
+          <div class="result-item">
+            <div class="result-label">Cluster</div>
+            <div class="result-value" id="rCluster">-</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Confiance</div>
+            <div class="result-value" id="rConf">-</div>
+            <div class="conf-bar">
+              <div class="conf-fill" id="rConfBar" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Commandes utilisees</div>
+            <div class="result-value" id="rNOrders">-</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Client ID</div>
+            <div class="result-value" id="rCustId" style="font-size:.78rem;word-break:break-all">-</div>
+          </div>
+        </div>
+        <div class="action-box">
+          <div class="action-label">Action recommandee</div>
+          <div id="rAction" style="color:#155724;font-size:.95rem">-</div>
+        </div>
+        <div class="feats-title">Features calculees</div>
+        <div class="feats-grid">
+          <div class="feat">
+            <div class="feat-name">Recency (j)</div>
+            <div class="feat-val" id="fRecency">-</div>
+          </div>
+          <div class="feat">
+            <div class="feat-name">Review</div>
+            <div class="feat-val" id="fReview">-</div>
+          </div>
+          <div class="feat">
+            <div class="feat-name">Livraison (j)</div>
+            <div class="feat-val" id="fDelivery">-</div>
+          </div>
+          <div class="feat">
+            <div class="feat-name">Versements</div>
+            <div class="feat-val" id="fInstall">-</div>
+          </div>
+          <div class="feat">
+            <div class="feat-name">CLV (BRL)</div>
+            <div class="feat-val" id="fClv">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script>
+    let orderCount = 0;
+    let isExistingCustomer = false;
+
+    // ---- Tabs ----
+    function switchTab(t) {
+      ['smart', 'direct'].forEach(id => {
+        document.getElementById('panel-' + id).classList.toggle('active', id === t);
+        document.getElementById('tab-' + id).classList.toggle('active', id === t);
+      });
+      hideResult(); clearError();
+    }
+
+    // ---- Customer lookup ----
+    async function checkCustomer() {
+      const id = document.getElementById('smartCustId').value.trim();
+      if (!id) { showError('Veuillez entrer un ID client.'); return; }
+      const el = document.getElementById('lookupStatus');
+      el.textContent = 'Verification...';
+      clearError();
+      try {
+        const r = await fetch('/customer/' + encodeURIComponent(id) + '/orders');
+        const d = await r.json();
+        isExistingCustomer = !d.is_new_customer;
+        if (isExistingCustomer) {
+          el.innerHTML = '<span class="badge badge-existing">Client existant — ' + d.orders.length + ' commande(s) en base. Son historique sera fusionne avec les nouvelles commandes.</span>';
+          document.getElementById('fusionBanner').style.display = 'block';
+          document.getElementById('newOrdersLabel').textContent = 'Nouvelles commandes a ajouter a l\'historique (optionnel)';
+        } else {
+          el.innerHTML = '<span class="badge badge-new">Nouveau client — aucun historique en base. Prediction sur les commandes saisies uniquement.</span>';
+          document.getElementById('fusionBanner').style.display = 'none';
+          document.getElementById('newOrdersLabel').textContent = 'Nouvelles commandes';
+        }
+      } catch (e) {
+        el.textContent = 'Erreur: ' + e.message;
+        isExistingCustomer = false;
+      }
+    }
+
+    // ---- Order cards ----
+    function addOrder(data) {
+      const idx = orderCount++;
+      const list = document.getElementById('ordersList');
+      const d = document.createElement('div');
+      d.className = 'order-card'; d.id = 'order-' + idx;
+
+      const pDate = data?.order_purchase_timestamp
+        ? data.order_purchase_timestamp.replace(' ', ':').split(':')[0] + '-'
+        + data.order_purchase_timestamp.replace(' ', ':').split(':')[1] + '-'
+        // simpler:
+        : '';
+      // Parse dates cleanly
+      let pD = '', pT = '', dD = '', dT = '';
+      if (data?.order_purchase_timestamp) {
+        const s = data.order_purchase_timestamp.replace('T', ' ');
+        pD = s.split(' ')[0] || ''; pT = (s.split(' ')[1] || '').substring(0, 5);
+      }
+      if (data?.order_delivered_customer_date) {
+        const s = data.order_delivered_customer_date.replace('T', ' ');
+        dD = s.split(' ')[0] || ''; dT = (s.split(' ')[1] || '').substring(0, 5);
+      }
+      const rev = data?.review_score || '';
+      const opts = [1, 2, 3, 4, 5].map(v => `<option value="${v}"${rev == v ? ' selected' : ''}>${v}</option>`).join('');
+      const num = list.children.length + 1;
+      d.innerHTML = `
     <div class="order-header">
       <span class="order-title">Commande ${num}</span>
       <button class="btn-remove" onclick="removeOrder('order-${idx}')">Supprimer</button>
     </div>
     <div class="form-grid">
       <div class="form-group"><label>ID Commande</label>
-        <input type="text" name="o_id" value="${data?.order_id||''}"></div>
+        <input type="text" name="o_id" value="${data?.order_id || ''}"></div>
       <div class="form-group"><label>Date d'achat</label>
         <div class="dt-pair">
           <input type="date" name="o_pd" value="${pD}">
           <input type="time" name="o_pt" value="${pT}">
         </div></div>
       <div class="form-group"><label>Montant (BRL)</label>
-        <input type="number" name="o_pay" step="0.01" min="0" value="${data?.payment_value||''}"></div>
+        <input type="number" name="o_pay" step="0.01" min="0" value="${data?.payment_value || ''}"></div>
       <div class="form-group"><label>Nb versements</label>
-        <input type="number" name="o_inst" min="1" step="1" value="${data?.payment_installments||''}"></div>
+        <input type="number" name="o_inst" min="1" step="1" value="${data?.payment_installments || ''}"></div>
       <div class="form-group"><label>Date de livraison</label>
         <div class="dt-pair">
           <input type="date" name="o_dd" value="${dD}">
@@ -301,236 +768,237 @@ function addOrder(data) {
       <div class="form-group"><label>Note (1-5)</label>
         <select name="o_rev"><option value="">Sans avis</option>${opts}</select></div>
     </div>`;
-  list.appendChild(d);
-}
-
-function removeOrder(id) {
-  const el = document.getElementById(id); if(el) el.remove();
-  document.querySelectorAll('.order-card').forEach((c,i)=>{
-    const t=c.querySelector('.order-title'); if(t) t.textContent='Commande '+(i+1);
-  });
-}
-
-function collectOrders() {
-  const custId = document.getElementById('smartCustId').value.trim();
-  return Array.from(document.querySelectorAll('.order-card')).map(card=>{
-    const g = n => card.querySelector('[name="'+n+'"]')?.value?.trim()||'';
-    const pd=g('o_pd'), pt=g('o_pt'), dd=g('o_dd'), dt=g('o_dt');
-    const o = {
-      order_id: g('o_id')||('ORD-'+Math.random().toString(36).substr(2,6).toUpperCase()),
-      customer_unique_id: custId||'CUST-UNKNOWN',
-      order_status: 'delivered',
-      order_purchase_timestamp: pd?(pd+' '+(pt||'12:00')+':00'):'',
-      payment_value: parseFloat(g('o_pay'))||0
-    };
-    const inst=g('o_inst'); if(inst) o.payment_installments=parseFloat(inst);
-    if(dd) o.order_delivered_customer_date=dd+' '+(dt||'12:00')+':00';
-    const rev=g('o_rev'); if(rev) o.review_score=parseFloat(rev);
-    return o;
-  });
-}
-
-// ---- Submit smart ----
-async function submitSmart() {
-  const orders = collectOrders();
-  const custId = document.getElementById('smartCustId').value.trim();
-  if (!orders.length && !custId) {
-    showError('Ajoutez au moins une commande ou renseignez un ID client.', 'Vous pouvez aussi utiliser le bouton "Charger un exemple" pour voir un cas de demonstration.');
-    return;
-  }
-  for (const o of orders) {
-    if (!o.order_purchase_timestamp) {
-      showError('La date d\'achat est manquante pour une commande.', 'Renseignez la date et l\'heure d\'achat pour chaque commande saisie.');
-      return;
+      list.appendChild(d);
     }
-    if (!o.payment_value) {
-      showError('Le montant de paiement est manquant pour une commande.', 'Indiquez le montant total paye pour chaque commande.');
-      return;
+
+    function removeOrder(id) {
+      const el = document.getElementById(id); if (el) el.remove();
+      document.querySelectorAll('.order-card').forEach((c, i) => {
+        const t = c.querySelector('.order-title'); if (t) t.textContent = 'Commande ' + (i + 1);
+      });
     }
-  }
-  await callPredict('/predict-smart', { customer_unique_id: custId||null, orders });
-}
 
-// ---- Submit direct ----
-async function submitDirect() {
-  const id = document.getElementById('directCustId').value.trim();
-  if (!id) {
-    showError('Veuillez entrer un ID client.', 'L\'identifiant client (customer_unique_id) est un code hexadecimal de 32 caracteres. Utilisez le bouton "Exemple ID client" pour voir un exemple.');
-    return;
-  }
-  clearError(); showLoading(true);
-  try {
-    const r = await fetch('/customer/'+encodeURIComponent(id)+'/predict');
-    const d = await r.json();
-    if (!r.ok) {
-      const tip = r.status === 404
-        ? 'Cet identifiant n\'existe pas dans la base de donnees. Verifiez l\'ID ou utilisez le Mode Commandes pour un nouveau client.'
-        : 'Verifiez que l\'API est bien disponible et reessayez.';
-      throw new Error(d.detail||'Erreur API');
+    function collectOrders() {
+      const custId = document.getElementById('smartCustId').value.trim();
+      return Array.from(document.querySelectorAll('.order-card')).map(card => {
+        const g = n => card.querySelector('[name="' + n + '"]')?.value?.trim() || '';
+        const pd = g('o_pd'), pt = g('o_pt'), dd = g('o_dd'), dt = g('o_dt');
+        const o = {
+          order_id: g('o_id') || ('ORD-' + Math.random().toString(36).substr(2, 6).toUpperCase()),
+          customer_unique_id: custId || 'CUST-UNKNOWN',
+          order_status: 'delivered',
+          order_purchase_timestamp: pd ? (pd + ' ' + (pt || '12:00') + ':00') : '',
+          payment_value: parseFloat(g('o_pay')) || 0
+        };
+        const inst = g('o_inst'); if (inst) o.payment_installments = parseFloat(inst);
+        if (dd) o.order_delivered_customer_date = dd + ' ' + (dt || '12:00') + ':00';
+        const rev = g('o_rev'); if (rev) o.review_score = parseFloat(rev);
+        return o;
+      });
     }
-    displayResult(d);
-    document.getElementById('directStatus').innerHTML =
-      '<span class="badge badge-existing">'+d.n_historical_orders+' commande(s) historiques utilisees</span>';
-  } catch(e) {
-    const tip = e.message.includes('introuvable') || e.message.includes('not found')
-      ? 'Cet identifiant n\'existe pas dans la base de donnees. Verifiez l\'ID ou utilisez le Mode Commandes pour predire sans historique.'
-      : null;
-    showError(e.message, tip);
-  } finally { showLoading(false); }
-}
 
-async function callPredict(url, body) {
-  clearError(); showLoading(true);
-  try {
-    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
-    const d = await r.json();
-    if (!r.ok) {
-      const tip = r.status === 404
-        ? 'Client non trouve en base. Pour predire sans historique, laissez l\'ID client vide.'
-        : r.status === 422
-        ? 'Verifiez que tous les champs obligatoires sont correctement remplis.'
-        : null;
-      showError(d.detail||'Erreur API', tip);
-      return;
+    // ---- Submit smart ----
+    async function submitSmart() {
+      const orders = collectOrders();
+      const custId = document.getElementById('smartCustId').value.trim();
+      if (!orders.length && !custId) {
+        showError('Ajoutez au moins une commande ou renseignez un ID client.', 'Vous pouvez aussi utiliser le bouton "Charger un exemple" pour voir un cas de demonstration.');
+        return;
+      }
+      for (const o of orders) {
+        if (!o.order_purchase_timestamp) {
+          showError('La date d\'achat est manquante pour une commande.', 'Renseignez la date et l\'heure d\'achat pour chaque commande saisie.');
+          return;
+        }
+        if (!o.payment_value) {
+          showError('Le montant de paiement est manquant pour une commande.', 'Indiquez le montant total paye pour chaque commande.');
+          return;
+        }
+      }
+      await callPredict('/predict-smart', { customer_unique_id: custId || null, orders });
     }
-    displayResult(d);
-  } catch(e) { showError(e.message, 'Verifiez votre connexion et que l\'API est disponible.'); } finally { showLoading(false); }
-}
 
-function displayResult(d) {
-  document.getElementById('rSegment').textContent = d.segment_name||'-';
-  document.getElementById('rCluster').textContent = d.cluster??'-';
-  const conf = ((d.confidence||0)*100).toFixed(1);
-  document.getElementById('rConf').textContent = conf+'%';
-  document.getElementById('rConfBar').style.width = conf+'%';
-  document.getElementById('rCustId').textContent = d.customer_id||'-';
-  document.getElementById('rNOrders').textContent = d.n_total_orders??'-';
-  document.getElementById('rAction').textContent = d.segment_action||'-';
+    // ---- Submit direct ----
+    async function submitDirect() {
+      const id = document.getElementById('directCustId').value.trim();
+      if (!id) {
+        showError('Veuillez entrer un ID client.', 'L\'identifiant client (customer_unique_id) est un code hexadecimal de 32 caracteres. Utilisez le bouton "Exemple ID client" pour voir un exemple.');
+        return;
+      }
+      clearError(); showLoading(true);
+      try {
+        const r = await fetch('/customer/' + encodeURIComponent(id) + '/predict');
+        const d = await r.json();
+        if (!r.ok) {
+          const tip = r.status === 404
+            ? 'Cet identifiant n\'existe pas dans la base de donnees. Verifiez l\'ID ou utilisez le Mode Commandes pour un nouveau client.'
+            : 'Verifiez que l\'API est bien disponible et reessayez.';
+          throw new Error(d.detail || 'Erreur API');
+        }
+        displayResult(d);
+        document.getElementById('directStatus').innerHTML =
+          '<span class="badge badge-existing">' + d.n_historical_orders + ' commande(s) historiques utilisees</span>';
+      } catch (e) {
+        const tip = e.message.includes('introuvable') || e.message.includes('not found')
+          ? 'Cet identifiant n\'existe pas dans la base de donnees. Verifiez l\'ID ou utilisez le Mode Commandes pour predire sans historique.'
+          : null;
+        showError(e.message, tip);
+      } finally { showLoading(false); }
+    }
 
-  const meta = document.getElementById('metaInfo');
-  if (d.is_existing_customer !== undefined) {
-    const cls = d.is_existing_customer?'badge-existing':'badge-new';
-    const txt = d.is_existing_customer
-      ? 'Client existant — '+d.n_historical_orders+' commande(s) historiques + '+d.n_new_orders+' nouvelle(s) = '+d.n_total_orders+' total'
-      : 'Nouveau client — '+d.n_new_orders+' commande(s) saisie(s)';
-    meta.innerHTML = '<span class="badge '+cls+'">'+txt+'</span>';
-  } else { meta.innerHTML=''; }
+    async function callPredict(url, body) {
+      clearError(); showLoading(true);
+      try {
+        const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const d = await r.json();
+        if (!r.ok) {
+          const tip = r.status === 404
+            ? 'Client non trouve en base. Pour predire sans historique, laissez l\'ID client vide.'
+            : r.status === 422
+              ? 'Verifiez que tous les champs obligatoires sont correctement remplis.'
+              : null;
+          showError(d.detail || 'Erreur API', tip);
+          return;
+        }
+        displayResult(d);
+      } catch (e) { showError(e.message, 'Verifiez votre connexion et que l\'API est disponible.'); } finally { showLoading(false); }
+    }
 
-  const f = d.engineered_features||{};
-  document.getElementById('fRecency').textContent = f.Recency!==undefined?Math.round(f.Recency):'-';
-  document.getElementById('fReview').textContent = f.avg_review_score_full!==undefined?f.avg_review_score_full.toFixed(2):'-';
-  document.getElementById('fDelivery').textContent = f.avg_delivery_days!==undefined?f.avg_delivery_days.toFixed(1):'-';
-  document.getElementById('fInstall').textContent = f.avg_installments!==undefined?f.avg_installments.toFixed(1):'-';
-  document.getElementById('fClv').textContent = f.CLV_estimate!==undefined?Math.round(f.CLV_estimate):'-';
+    function displayResult(d) {
+      document.getElementById('rSegment').textContent = d.segment_name || '-';
+      document.getElementById('rCluster').textContent = d.cluster ?? '-';
+      const conf = ((d.confidence || 0) * 100).toFixed(1);
+      document.getElementById('rConf').textContent = conf + '%';
+      document.getElementById('rConfBar').style.width = conf + '%';
+      document.getElementById('rCustId').textContent = d.customer_id || '-';
+      document.getElementById('rNOrders').textContent = d.n_total_orders ?? '-';
+      document.getElementById('rAction').textContent = d.segment_action || '-';
 
-  document.getElementById('resultCard').classList.add('show');
-  document.getElementById('resultCard').scrollIntoView({behavior:'smooth',block:'nearest'});
-}
+      const meta = document.getElementById('metaInfo');
+      if (d.is_existing_customer !== undefined) {
+        const cls = d.is_existing_customer ? 'badge-existing' : 'badge-new';
+        const txt = d.is_existing_customer
+          ? 'Client existant — ' + d.n_historical_orders + ' commande(s) historiques + ' + d.n_new_orders + ' nouvelle(s) = ' + d.n_total_orders + ' total'
+          : 'Nouveau client — ' + d.n_new_orders + ' commande(s) saisie(s)';
+        meta.innerHTML = '<span class="badge ' + cls + '">' + txt + '</span>';
+      } else { meta.innerHTML = ''; }
 
-function resetSmartForm() {
-  document.getElementById('ordersList').innerHTML=''; orderCount=0;
-  document.getElementById('smartCustId').value='';
-  document.getElementById('lookupStatus').innerHTML='';
-  document.getElementById('fusionBanner').style.display='none';
-  document.getElementById('newOrdersLabel').textContent='Nouvelles commandes';
-  isExistingCustomer=false; clearError(); hideResult();
-}
+      const f = d.engineered_features || {};
+      document.getElementById('fRecency').textContent = f.Recency !== undefined ? Math.round(f.Recency) : '-';
+      document.getElementById('fReview').textContent = f.avg_review_score_full !== undefined ? f.avg_review_score_full.toFixed(2) : '-';
+      document.getElementById('fDelivery').textContent = f.avg_delivery_days !== undefined ? f.avg_delivery_days.toFixed(1) : '-';
+      document.getElementById('fInstall').textContent = f.avg_installments !== undefined ? f.avg_installments.toFixed(1) : '-';
+      document.getElementById('fClv').textContent = f.CLV_estimate !== undefined ? Math.round(f.CLV_estimate) : '-';
 
-// ---- Varied examples ----
-const EXAMPLES = [
-  {
-    label: 'Client fidele multi-commandes',
-    orders: [
-      { order_id:'ORD-A1', days_ago:310, payment:320.00, install:6, delivery_lag:8, review:5 },
-      { order_id:'ORD-A2', days_ago:200, payment:185.50, install:3, delivery_lag:10, review:4 },
-      { order_id:'ORD-A3', days_ago:90,  payment:430.00, install:8, delivery_lag:7, review:5 }
-    ]
-  },
-  {
-    label: 'Client insatisfait commande unique',
-    orders: [
-      { order_id:'ORD-B1', days_ago:60, payment:52.90, install:1, delivery_lag:22, review:1 }
-    ]
-  },
-  {
-    label: 'Client recents deux achats',
-    orders: [
-      { order_id:'ORD-C1', days_ago:40, payment:99.00,  install:2, delivery_lag:9,  review:4 },
-      { order_id:'ORD-C2', days_ago:15, payment:145.00, install:3, delivery_lag:11, review:3 }
-    ]
-  },
-  {
-    label: 'Client premium gros panier',
-    orders: [
-      { order_id:'ORD-D1', days_ago:180, payment:890.00, install:10, delivery_lag:6, review:5 },
-      { order_id:'ORD-D2', days_ago:80,  payment:650.00, install:8,  delivery_lag:5, review:5 }
-    ]
-  },
-  {
-    label: 'Client inactif ancienne commande',
-    orders: [
-      { order_id:'ORD-E1', days_ago:480, payment:78.50, install:1, delivery_lag:15, review:3 }
-    ]
-  }
-];
-let exampleIdx = 0;
+      document.getElementById('resultCard').classList.add('show');
+      document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 
-function loadExample() {
-  resetSmartForm();
-  const ex = EXAMPLES[exampleIdx % EXAMPLES.length];
-  exampleIdx++;
-  const sub = d => { const dt=new Date(); dt.setDate(dt.getDate()-d); return dt.toISOString().split('T')[0]; };
-  ex.orders.forEach(o => {
-    addOrder({
-      order_id: o.order_id,
-      order_purchase_timestamp: sub(o.days_ago) + ' 10:00:00',
-      payment_value: o.payment,
-      payment_installments: o.install,
-      order_delivered_customer_date: sub(o.days_ago - o.delivery_lag) + ' 14:00:00',
-      review_score: o.review
-    });
-  });
-}
+    function resetSmartForm() {
+      document.getElementById('ordersList').innerHTML = ''; orderCount = 0;
+      document.getElementById('smartCustId').value = '';
+      document.getElementById('lookupStatus').innerHTML = '';
+      document.getElementById('fusionBanner').style.display = 'none';
+      document.getElementById('newOrdersLabel').textContent = 'Nouvelles commandes';
+      isExistingCustomer = false; clearError(); hideResult();
+    }
 
-// ---- Example IDs for direct mode ----
-const EXAMPLE_IDS = [
-  '00172711b30d52eea8b313a7f2cced02',
-  '004288347e5e88a27ded2bb23747066c',
-  '004b45ec5c64187465168251cd1c9c2f',
-  '0058f300f57d7b93c477a131a59b36c3',
-  '0000366f3b9a7992bf8c76cfdf3221e2'
-];
-let exIdIdx = 0;
-function loadExampleDirect() {
-  document.getElementById('smartCustId').value = EXAMPLE_IDS[exIdIdx % EXAMPLE_IDS.length];
-  exIdIdx++;
-}
+    // ---- Varied examples ----
+    const EXAMPLES = [
+      {
+        label: 'Client fidele multi-commandes',
+        orders: [
+          { order_id: 'ORD-A1', days_ago: 310, payment: 320.00, install: 6, delivery_lag: 8, review: 5 },
+          { order_id: 'ORD-A2', days_ago: 200, payment: 185.50, install: 3, delivery_lag: 10, review: 4 },
+          { order_id: 'ORD-A3', days_ago: 90, payment: 430.00, install: 8, delivery_lag: 7, review: 5 }
+        ]
+      },
+      {
+        label: 'Client insatisfait commande unique',
+        orders: [
+          { order_id: 'ORD-B1', days_ago: 60, payment: 52.90, install: 1, delivery_lag: 22, review: 1 }
+        ]
+      },
+      {
+        label: 'Client recents deux achats',
+        orders: [
+          { order_id: 'ORD-C1', days_ago: 40, payment: 99.00, install: 2, delivery_lag: 9, review: 4 },
+          { order_id: 'ORD-C2', days_ago: 15, payment: 145.00, install: 3, delivery_lag: 11, review: 3 }
+        ]
+      },
+      {
+        label: 'Client premium gros panier',
+        orders: [
+          { order_id: 'ORD-D1', days_ago: 180, payment: 890.00, install: 10, delivery_lag: 6, review: 5 },
+          { order_id: 'ORD-D2', days_ago: 80, payment: 650.00, install: 8, delivery_lag: 5, review: 5 }
+        ]
+      },
+      {
+        label: 'Client inactif ancienne commande',
+        orders: [
+          { order_id: 'ORD-E1', days_ago: 480, payment: 78.50, install: 1, delivery_lag: 15, review: 3 }
+        ]
+      }
+    ];
+    let exampleIdx = 0;
 
-function showLoading(v){document.getElementById('loading').style.display=v?'block':'none';}
+    function loadExample() {
+      resetSmartForm();
+      const ex = EXAMPLES[exampleIdx % EXAMPLES.length];
+      exampleIdx++;
+      const sub = d => { const dt = new Date(); dt.setDate(dt.getDate() - d); return dt.toISOString().split('T')[0]; };
+      ex.orders.forEach(o => {
+        addOrder({
+          order_id: o.order_id,
+          order_purchase_timestamp: sub(o.days_ago) + ' 10:00:00',
+          payment_value: o.payment,
+          payment_installments: o.install,
+          order_delivered_customer_date: sub(o.days_ago - o.delivery_lag) + ' 14:00:00',
+          review_score: o.review
+        });
+      });
+    }
 
-function showError(msg, tip) {
-  const card = document.getElementById('resultCard');
-  card.classList.add('show','error-state');
-  document.getElementById('errorContent').style.display='block';
-  document.getElementById('successContent').style.display='none';
-  document.getElementById('errorMsg').textContent = msg;
-  const tipEl = document.getElementById('errorTip');
-  if (tip) { tipEl.textContent = tip; tipEl.style.display='block'; }
-  else { tipEl.style.display='none'; }
-  card.scrollIntoView({behavior:'smooth',block:'nearest'});
-}
+    // ---- Example IDs for direct mode ----
+    const EXAMPLE_IDS = [
+      '00172711b30d52eea8b313a7f2cced02',
+      '004288347e5e88a27ded2bb23747066c',
+      '004b45ec5c64187465168251cd1c9c2f',
+      '0058f300f57d7b93c477a131a59b36c3',
+      '0000366f3b9a7992bf8c76cfdf3221e2'
+    ];
+    let exIdIdx = 0;
+    function loadExampleDirect() {
+      document.getElementById('smartCustId').value = EXAMPLE_IDS[exIdIdx % EXAMPLE_IDS.length];
+      exIdIdx++;
+    }
 
-function clearError() {
-  const card = document.getElementById('resultCard');
-  card.classList.remove('error-state');
-  document.getElementById('errorContent').style.display='none';
-  document.getElementById('successContent').style.display='block';
-}
+    function showLoading(v) { document.getElementById('loading').style.display = v ? 'block' : 'none'; }
 
-function hideResult(){document.getElementById('resultCard').classList.remove('show','error-state');}
+    function showError(msg, tip) {
+      const card = document.getElementById('resultCard');
+      card.classList.add('show', 'error-state');
+      document.getElementById('errorContent').style.display = 'block';
+      document.getElementById('successContent').style.display = 'none';
+      document.getElementById('errorMsg').textContent = msg;
+      const tipEl = document.getElementById('errorTip');
+      if (tip) { tipEl.textContent = tip; tipEl.style.display = 'block'; }
+      else { tipEl.style.display = 'none'; }
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 
-// Init
-addOrder();
-</script>
+    function clearError() {
+      const card = document.getElementById('resultCard');
+      card.classList.remove('error-state');
+      document.getElementById('errorContent').style.display = 'none';
+      document.getElementById('successContent').style.display = 'block';
+    }
+
+    function hideResult() { document.getElementById('resultCard').classList.remove('show', 'error-state'); }
+
+    // Init
+    addOrder();
+  </script>
 </body>
+
 </html>

@@ -282,6 +282,20 @@ class SegmentationAPI:
         if rows.empty:
             return []
 
+        # ── Filtre sur le statut ──────────────────────────────────────────────
+        # On ne conserve que les commandes "delivered", comme dans le pipeline
+        # d'entraînement. Les commandes annulées, expédiées, en attente, etc.
+        # sont exclues pour que le compte et les features soient cohérents
+        # avec ceux utilisés lors de l'entraînement du modèle.
+        delivered = rows[rows["order_status"] == "delivered"]
+        n_excluded = len(rows["order_id"].unique()) - len(delivered["order_id"].unique())
+        if n_excluded > 0:
+            logger.debug(
+                f"Customer {customer_unique_id}: {n_excluded} commande(s) non-delivered exclues."
+            )
+        rows = delivered if not delivered.empty else rows  # fallback si aucune delivered
+
+
         # ── Agrégation par order_id ───────────────────────────────────────────
         # payment_value dans base_final.csv est le total de la commande,
         # répété pour chaque article → on prend "first" (pas "sum") pour éviter
