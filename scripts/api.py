@@ -264,21 +264,46 @@ class SegmentationAPI:
 
     def get_customer_orders_from_db(self, customer_unique_id: str) -> List[Dict]:
         """
-        Retourne les commandes historiques d'un client depuis base_final.csv.
-        Retourne une liste vide si le client n'existe pas.
+        Retourne les commandes historiques d'un client depuis la customer DB.
+
+        La base est au niveau item (une ligne par article commandé).
+        On agrège par order_id pour obtenir une ligne par commande :
+          - payment_value  : somme (total payé pour la commande)
+          - payment_installments, order_status, order_purchase_timestamp,
+            order_delivered_customer_date, review_score : première valeur non-nulle
         """
         self._ensure_customer_db()
         if self._customer_db is None:
             return []
+
         rows = self._customer_db[
             self._customer_db["customer_unique_id"] == customer_unique_id
         ]
         if rows.empty:
             return []
+
+        # ── Agrégation par order_id ───────────────────────────────────────────
+        # payment_value dans base_final.csv est le total de la commande,
+        # répété pour chaque article → on prend "first" (pas "sum") pour éviter
+        # le double comptage.
+        agg = (
+            rows.groupby("order_id", sort=False)
+            .agg(
+                customer_unique_id=("customer_unique_id", "first"),
+                order_status=("order_status", "first"),
+                order_purchase_timestamp=("order_purchase_timestamp", "first"),
+                order_delivered_customer_date=("order_delivered_customer_date", "first"),
+                payment_value=("payment_value", "first"),        # total commande répété
+                payment_installments=("payment_installments", "first"),
+                review_score=("review_score", "first"),
+            )
+            .reset_index()
+        )
+
         result = []
-        for _, r in rows.iterrows():
+        for _, r in agg.iterrows():
             order = {
-                "order_id": str(r.get("order_id", "")),
+                "order_id": str(r["order_id"]),
                 "customer_unique_id": customer_unique_id,
                 "order_status": str(r.get("order_status", "delivered")),
                 "order_purchase_timestamp": str(r.get("order_purchase_timestamp", "")),
@@ -297,8 +322,13 @@ class SegmentationAPI:
                 ),
             }
             result.append(order)
-        logger.info(f"Found {len(result)} historical order(s) for customer {customer_unique_id}")
+
+        logger.info(
+            f"Customer {customer_unique_id}: {len(rows)} lignes brutes → "
+            f"{len(result)} commande(s) après agrégation"
+        )
         return result
+
 
     def predict_smart(
         self,
