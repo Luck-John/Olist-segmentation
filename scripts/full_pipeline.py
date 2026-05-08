@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # FULL SEGMENTATION PIPELINE — FINAL VERSION
 # ============================================================
 # Utilise les 5 features actives du notebook Final.ipynb
@@ -35,21 +35,21 @@ FEATURES_ACTIVE = [
     "CLV_estimate"
 ]
 
-# Noms des segments basés sur les quantiles
+# Noms des segments basés sur l'analyse des profils médians
 SEGMENT_NAMES = {
-    0: "OKOKOK Acheteurs Valeur Moyenne",
-    1: "OKOK Clients Déçus",
-    2: "OKOK Dormants Faible Valeur",
-    3: "OKOK Premium Crédit",
-    4: "OKOK Nouveaux Prometteurs"
+    0: "Acheteurs Valeur Moyenne",
+    1: "Clients Satisfaits Ponctuels",
+    2: "Nouveaux Clients Recents",
+    3: "Clients Decus",
+    4: "Clients Fideles Premium"
 }
 
 SEGMENT_ACTIONS = {
-    0: "Reactivation + Bundle + Points Program",
-    1: "Immediate Contact + Refund Offer + Quality Inquiry",
-    2: "Win-back Campaign -20% or Progressive Disengagement",
-    3: "VIP Offers + Increased Credit Limit + Early Access",
-    4: "Welcome Program + Product Recommendations"
+    0: "Cross-selling et programme de fidelite",
+    1: "Incitation au reachat et montee en gamme",
+    2: "Programme d'accueil et recommandations",
+    3: "Suivi SAV et amelioration livraison",
+    4: "Programme VIP et offres exclusives"
 }
 
 print("=" * 70)

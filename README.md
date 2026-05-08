@@ -1,333 +1,142 @@
-# 🎯 Olist Customer Segmentation
+# Segmentation Client Olist
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
-[![Lint: flake8](https://img.shields.io/badge/lint-flake8-blue)](https://github.com/PyCQA/flake8)
-[![MLFlow](https://img.shields.io/badge/MLflow-tracking-blue)](https://mlflow.org/)
-[![Docker](https://img.shields.io/badge/Docker-containerized-blue)](https://www.docker.com/)
+Projet de Machine Learning 2 — ISE2, Semestre 2 (2026)
 
-## 📋 Project Overview
+## Objectif
 
-This project implements a comprehensive customer segmentation pipeline for Olist, a Brazilian e-commerce platform. The solution includes:
+Ce projet realise la **segmentation non supervisee** des clients de la plateforme e-commerce bresilienne Olist.
+L'objectif est d'identifier des groupes de clients aux comportements distincts pour orienter les strategies marketing.
 
-- **Data Processing**: Automated data loading, cleaning, and validation
-- **Feature Engineering**: RFM analysis, behavioral metrics, geographic features
-- **Clustering Models**: KMeans, DBSCAN, Hierarchical clustering
-- **MLFlow Integration**: Full experiment tracking and model registry
-- **Testing**: >80% code coverage with pytest
-- **CI/CD**: GitHub Actions with automated testing and quality checks
-- **Docker**: Containerized pipeline for production deployment
-
-## 📊 Project Structure
+## Structure du projet
 
 ```
 Projet_2026/
-├── src/                          # Source code
-│   ├── data/                    # Data loading and preprocessing
-│   │   ├── __init__.py
-│   │   └── preprocessing.py     # Data cleaning functions
-│   ├── features/                # Feature engineering
-│   │   ├── __init__.py
-│   │   └── engineering.py       # RFM and feature creation
-│   ├── clustering/              # Clustering models
-│   │   ├── __init__.py
-│   │   └── models.py            # KMeans, DBSCAN, Hierarchical
-│   └── utils/
-│       ├── __init__.py
-│       └── config.py            # Configuration management
-├── tests/                       # Unit tests (>80% coverage)
-│   ├── __init__.py
-│   ├── fixtures.py              # Test fixtures
-│   ├── test_data.py            # Data tests
-│   ├── test_features.py        # Feature tests
-│   └── test_clustering.py      # Clustering tests
-├── scripts/                     # Execution scripts
-│   ├── run_pipeline.py         # Main pipeline
-│   └── register_model.py       # Model registry
-├── config/                     # Configuration files
-│   └── config.yaml            # Central configuration
-├── docker/                     # Docker setup
-│   ├── Dockerfile
-│   └── docker-compose.yml
-├── .github/workflows/          # CI/CD
-│   └── ci.yml
-├── notebooks/                  # Jupyter notebooks
-├── data/                       # Data files
-├── models/                     # Trained models
-├── reports/                    # Reports and visualizations
-├── requirements.txt           # Python dependencies
-└── README.md                 # This file
+├── data/                        # Donnees brutes Olist (CSV)
+├── notebooks/                   # Notebooks Jupyter
+│   ├── segmentation_01_analyse.ipynb        # Analyse exploratoire
+│   ├── segmentation_02_analyse.ipynb        # Analyse approfondie
+│   ├── Segmentation_03_modelisation.ipynb   # Modelisation et clustering
+│   ├── simulation_frequence_maj.ipynb       # Simulation frequence de MAJ
+│   ├── models/                  # Modeles serialises (.pkl)
+│   ├── figures/                 # Graphiques generes
+│   └── reports/                 # Rapports CSV
+├── scripts/                     # Scripts Python
+│   ├── api.py                   # API FastAPI de prediction
+│   ├── full_pipeline.py         # Pipeline complet d'entrainement
+│   ├── start_api.py             # Lanceur de l'API
+│   └── run_pipeline.py          # Execution du pipeline
+├── src/                         # Code source modulaire
+│   ├── data/                    # Chargement et preprocessing
+│   ├── features/                # Feature engineering (RFM, CLV)
+│   ├── clustering/              # Modeles de clustering
+│   └── utils/                   # Configuration et utilitaires
+├── templates/                   # Templates HTML (interface web)
+├── static/                      # Fichiers statiques (CSS, JS)
+├── tests/                       # Tests unitaires (pytest)
+├── config/                      # Configuration (config.yaml)
+├── Dockerfile                   # Containerisation Docker
+├── railway.toml                 # Deploiement Railway
+├── requirements.txt             # Dependances Python
+└── requirements-api.txt         # Dependances API
 ```
 
-## 🚀 Quick Start
+## Methodologie
 
-### Local Setup
-
-```bash
-# 1. Clone the repository
-git clone <repository-url>
-cd Projet_2026
-
-# 2. Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Run pipeline
-python scripts/run_pipeline.py
-
-# 5. View MLFlow UI
-mlflow ui --tracking-uri file:./mlruns
-```
-
-### Docker Setup
-
-```bash
-# 1. Build and run with docker-compose
-cd docker
-docker-compose up -d
-
-# 2. Access services
-- MLFlow UI: http://localhost:5000
-- Dashboard: http://localhost:8501
-- Jupyter: http://localhost:8888
-
-# 3. View logs
-docker-compose logs -f pipeline
-```
-
-## 📚 Complete Documentation
-
-Start here to find the guide you need:
-
-| **Quick Lookup** | **Development** | **Deployment** | **Academic** |
-|---|---|---|---|
-| ⚡ [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | 👨‍💻 [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) | ✅ [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) | 🎓 [ACADEMIC_PRESENTATION.md](ACADEMIC_PRESENTATION.md) |
-| 📚 [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) | 🧪 [TESTING.md](TESTING.md) | 🚀 [DEPLOYMENT.md](DEPLOYMENT.md) | ⚡ [DEMO_SCRIPT.md](DEMO_SCRIPT.md) |
-| 🆘 [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | ✔️ [PRE_PUSH_VALIDATION.md](PRE_PUSH_VALIDATION.md) | 📋 [LOGGING.md](LOGGING.md) | 📊 [PROJECT_STATUS.md](PROJECT_STATUS.md) |
-
-**Start Here:** [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) - Find the right guide for your needs
-
----
-
-## 📈 MLFlow Tracking
-
-```bash
-# Start MLFlow server
-mlflow server --backend-store-uri file:./mlruns --host 0.0.0.0
-
-# Register model in registry
-python scripts/register_model.py --action promote
-
-# List model versions
-python scripts/register_model.py --action list
-
-# Load production model
-python scripts/register_model.py --action load
-```
-
-## ⚙️ Configuration
-
-All parameters are centralized in `config/config.yaml`:
-
-```yaml
-# Random state for reproducibility
-random_state: 42
-
-# Clustering parameters
-clustering:
-  kmeans:
-    k_min: 2
-    k_max: 10
-  dbscan:
-    eps_min: 0.3
-    eps_max: 2.0
-
-# MLFlow
-mlflow:
-  experiment_name: "Olist_Segmentation"
-  tracking_uri: "file:./mlruns"
-```
-
-Modify `config/config.yaml` to change parameters without editing code.
-
-## 📊 Pipeline Steps
-
-### 1. Data Loading & Preprocessing
-```python
-from src.data.preprocessing import DataPreprocessor
-
-preprocessor = DataPreprocessor()
-df = preprocessor.load_and_preprocess("data/base_final.csv")
-```
+### 1. Analyse exploratoire
+- Chargement et nettoyage des 11 tables Olist
+- Jointures et creation du dataset client unifie (93 358 clients)
 
 ### 2. Feature Engineering
-```python
-from src.features.engineering import FeatureEngineer
+- **RFM** : Recency, Frequency, Monetary
+- **Comportementaux** : delai livraison, score avis, versements, CLV
+- **Geographiques** : distance a Sao Paulo
+- **Categoriels** : categorie preferee, mode de paiement
+- Total : 47 features par client
 
-engineer = FeatureEngineer()
-df_features = engineer.engineer_features(df)
+### 3. Modelisation
+5 features retenues pour le clustering :
+- `Recency` : jours depuis le dernier achat
+- `avg_review_score_full` : note moyenne des avis
+- `avg_delivery_days` : delai moyen de livraison
+- `avg_installments` : nombre moyen de versements
+- `CLV_estimate` : valeur vie client estimee
+
+Pipeline : **QuantileTransformer → StandardScaler → PCA → KMeans (K=5)**
+
+5 algorithmes compares : KMeans, CAH Ward, GMM, DBSCAN, HDBSCAN
+
+### 4. Segments identifies
+
+| Segment | Taille | Profil |
+|---------|--------|--------|
+| **C0 - Acheteurs Valeur Moyenne** | 19.3% | Panier moyen, satisfaction moderee, paiement echelonne |
+| **C1 - Clients Satisfaits Ponctuels** | 25.7% | Review 5/5, achat unique, petit panier |
+| **C2 - Nouveaux Clients Recents** | 10.5% | Tres recents, livraison rapide, satisfaits |
+| **C3 - Clients Decus** | 18.3% | Review bas, livraison longue, insatisfaits |
+| **C4 - Clients Fideles Premium** | 26.2% | CLV eleve, paiement echelonne, satisfaits |
+
+### 5. Interpretabilite
+- **SHAP** : importance globale et locale des features
+- **LIME** : explications individuelles des predictions
+
+### 6. Simulation de maintenance
+Notebook dedie pour determiner la frequence optimale de re-entrainement du modele
+(drift des features, stabilite ARI, PSI).
+
+## API de prediction
+
+L'API FastAPI permet de predire le segment d'un nouveau client en temps reel.
+
+```bash
+# Lancer l'API
+cd scripts
+python start_api.py
+
+# Acceder a l'interface
+# http://localhost:8000/form
 ```
 
-### 3. Clustering
-```python
-from src.clustering.models import KMeansClustering
-from sklearn.preprocessing import StandardScaler
+### Endpoints
+- `GET /form` : Interface web de prediction
+- `POST /predict-raw` : Prediction via JSON
 
-kmeans = KMeansClustering()
-X_scaled = StandardScaler().fit_transform(X)
-results = kmeans.fit_range(X_scaled, k_range=(2, 10))
-best_k, best_model = kmeans.get_best_model()
+## Installation
+
+```bash
+# Cloner le depot
+git clone <url-du-repo>
+cd Projet_2026
+
+# Creer l'environnement virtuel
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+
+# Installer les dependances
+pip install -r requirements.txt
 ```
 
-## 🧮 Metrics
+## Deploiement
 
-**Data Preprocessing**
-- Missing values: Handled via median imputation
-- Outliers: Winsorization (0.5% tails)
-- Date conversion: Automatic with error handling
+Le projet est deploye sur **Railway** via le fichier `railway.toml`.
 
-**Feature Engineering**
-- RFM (Recency, Frequency, Monetary)
-- Delivery metrics: avg_delivery_days, late_delivery_rate
-- Review metrics: avg_review_score, review_participation_rate
-- Geographic: Distance to São Paulo
-- Total: 40+ features per customer
+```bash
+# Build Docker local
+docker build -t olist-segmentation .
 
-**Clustering Evaluation**
-- Silhouette Score: -1 to 1 (higher is better)
-- Davies-Bouldin Index: (lower is better)
-- Calinski-Harabasz Score: (higher is better)
-
-## 📊 Results
-
-Example output:
-```
-============================================================
-PIPELINE COMPLETED SUCCESSFULLY!
-============================================================
-
-Results Summary:
-  - Customers clustered: 99,441
-  - Features engineered: 45
-  - Optimal clusters: 4
-  - Silhouette score: 0.542
-
-Output files:
-  - Engineered features: data/Base.csv
-  - Clustered data: data/clustered_data.csv
-  - Model: models/kmeans_k4.pkl
+# Deploiement Railway
+railway up
 ```
 
-## 🧪 Testing Coverage
+## Technologies
 
-```
-Name                          Stmts   Miss  Cover
--------------------------------------------------
-src/data/preprocessing.py        120     12    90%
-src/features/engineering.py      180     18    90%
-src/clustering/models.py         250     25    90%
-src/utils/config.py               45      3    93%
--------------------------------------------------
-TOTAL                            595     58    90%
-```
+- **Python 3.9+**
+- **Scikit-learn** : preprocessing, clustering, metriques
+- **FastAPI** : API de prediction
+- **MLflow** : tracking des experiences
+- **SHAP / LIME** : interpretabilite
+- **Pandas / NumPy** : manipulation de donnees
+- **Matplotlib / Seaborn** : visualisations
 
-Target: **>80% coverage** ✓
+## Auteurs
 
-## 🔄 CI/CD Pipeline
-
-GitHub Actions workflow (`ci.yml`):
-
-1. **Install dependencies**: pip install requirements
-2. **Lint with flake8**: Check code style (PEP8)
-3. **Run pytest**: Unit tests with coverage
-4. **Code quality checks**: Black, isort
-5. **Build Docker image**: Multi-stage build
-6. **Upload to Codecov**: Coverage tracking
-
-Badges:
-- ✅ Tests passing
-- 📊 Code coverage
-- 🐳 Docker build
-
-## 🎯 Key Features
-
-✨ **Automated Pipeline**: One command to run full analysis
-🧪 **High Test Coverage**: >80% with pytest
-📈 **MLFlow Integration**: Track experiments and models
-🐳 **Docker Support**: Easy deployment
-📊 **Comprehensive Reporting**: Metrics and visualizations
-⚙️ **Configurable**: YAML-based configuration
-🔍 **Production Ready**: Model registry, logging, error handling
-
-## 📚 API Documentation
-
-### DataPreprocessor
-```python
-from src.data.preprocessing import DataPreprocessor
-
-preprocessor = DataPreprocessor(config)
-df = preprocessor.load_and_preprocess("path/to/data.csv")
-```
-
-### FeatureEngineer
-```python
-from src.features.engineering import FeatureEngineer
-
-engineer = FeatureEngineer(config)
-df_features = engineer.engineer_features(df)
-```
-
-### KMeansClustering
-```python
-from src.clustering.models import KMeansClustering
-
-kmeans = KMeansClustering(config)
-results = kmeans.fit_range(X_scaled, k_range=(2, 10))
-best_k, best_model = kmeans.get_best_model(metric='silhouette_score')
-labels = kmeans.predict(X_new, k=best_k)
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-All code must:
-- Pass flake8 linting
-- Have >80% test coverage
-- Follow PEP8 style guide
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 👥 Authors
-
-- Your Name
-- Project Team
-
-## 📞 Support
-
-For issues and questions:
-1. Check [GitHub Issues](https://github.com/your-repo/issues)
-2. Review [Documentation](./notebooks/)
-3. Contact the development team
-
-## 🔗 References
-
-- [MLFlow Documentation](https://mlflow.org/docs/latest/)
-- [Scikit-learn Clustering](https://scikit-learn.org/stable/modules/clustering.html)
-- [Docker Documentation](https://docs.docker.com/)
-- [pytest Documentation](https://docs.pytest.org/)
-
----
-
-**Last Updated**: December 2024
-**Version**: 1.0.0
+Projet ISE2 — Machine Learning 2 — Semestre 2, 2026
