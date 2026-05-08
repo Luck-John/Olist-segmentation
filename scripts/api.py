@@ -74,7 +74,7 @@ class RawOrder(BaseModel):
     Simplified to only include fields needed for the 5 main features.
     """
     order_id: str
-    customer_unique_id: str
+    customer_unique_id: Optional[str] = None  # Optionnel pour le mode smart
     order_status: str
 
     # Champs essentiels pour calculer les 5 features
@@ -103,6 +103,23 @@ class SegmentationResponse(BaseModel):
     confidence: Optional[float] = None
     # Populated for POST /predict-raw when features are computed server-side
     engineered_features: Optional[Dict[str, float]] = None
+    # Smart prediction metadata
+    is_existing_customer: Optional[bool] = None
+    n_historical_orders: Optional[int] = None
+    n_new_orders: Optional[int] = None
+    n_total_orders: Optional[int] = None
+
+
+class SmartPredictionRequest(BaseModel):
+    """
+    Requête pour la prédiction intelligente.
+    - customer_unique_id : optionnel. S'il est fourni et existe en base,
+      l'historique sera fusionné avec les nouvelles commandes.
+    - orders : liste de nouvelles commandes à prédire. Peut être vide
+      si customer_unique_id est fourni (prédiction directe depuis la base).
+    """
+    customer_unique_id: Optional[str] = None
+    orders: List[RawOrder] = []
 
 
 class ClusterProfile(BaseModel):
@@ -132,7 +149,10 @@ class SegmentationAPI:
         self.cluster_profiles_median = None
         self.final_results = None
         self.clustering_comparison = None
-        
+        # Customer database (base_final.csv) — lazy-loaded
+        self._customer_db: Optional[pd.DataFrame] = None
+        self._customer_db_loaded: bool = False
+
         self._load_model()
         self._load_data()
 
@@ -184,6 +204,143 @@ class SegmentationAPI:
             raise ValueError("Final results file not found")
         self.final_results = pd.read_csv(final_path)
         logger.info(f"Loaded final results (lazy): {len(self.final_results)} customers")
+
+    def _ensure_customer_db(self) -> None:
+        """
+        Charge la base clients (base_final.csv) une seule fois.
+        Colonnes minimales utilisées pour les features :
+          customer_unique_id, order_id, order_status,
+          order_purchase_timestamp, payment_value,
+          payment_installments, order_delivered_customer_date, review_score
+        """
+        if self._customer_db_loaded:
+            return
+        db_path = PROJECT_ROOT / "data" / "base_final.csv"
+        if not db_path.exists():
+            logger.warning(f"Customer DB not found at {db_path}")
+            self._customer_db = None
+            self._customer_db_loaded = True
+            return
+        needed_cols = [
+            "customer_unique_id", "order_id", "order_status",
+            "order_purchase_timestamp", "payment_value",
+            "payment_installments", "order_delivered_customer_date", "review_score"
+        ]
+        try:
+            self._customer_db = pd.read_csv(db_path, usecols=needed_cols, low_memory=False)
+            logger.info(f"Customer DB loaded: {len(self._customer_db)} rows")
+        except Exception as e:
+            logger.error(f"Failed to load customer DB: {e}")
+            self._customer_db = None
+        self._customer_db_loaded = True
+
+    def get_customer_orders_from_db(self, customer_unique_id: str) -> List[Dict]:
+        """
+        Retourne les commandes historiques d'un client depuis base_final.csv.
+        Retourne une liste vide si le client n'existe pas.
+        """
+        self._ensure_customer_db()
+        if self._customer_db is None:
+            return []
+        rows = self._customer_db[
+            self._customer_db["customer_unique_id"] == customer_unique_id
+        ]
+        if rows.empty:
+            return []
+        result = []
+        for _, r in rows.iterrows():
+            order = {
+                "order_id": str(r.get("order_id", "")),
+                "customer_unique_id": customer_unique_id,
+                "order_status": str(r.get("order_status", "delivered")),
+                "order_purchase_timestamp": str(r.get("order_purchase_timestamp", "")),
+                "payment_value": float(r.get("payment_value", 0) or 0),
+                "payment_installments": (
+                    float(r["payment_installments"])
+                    if pd.notna(r.get("payment_installments")) else None
+                ),
+                "order_delivered_customer_date": (
+                    str(r["order_delivered_customer_date"])
+                    if pd.notna(r.get("order_delivered_customer_date")) else None
+                ),
+                "review_score": (
+                    float(r["review_score"])
+                    if pd.notna(r.get("review_score")) else None
+                ),
+            }
+            result.append(order)
+        logger.info(f"Found {len(result)} historical order(s) for customer {customer_unique_id}")
+        return result
+
+    def predict_smart(
+        self,
+        new_orders: List[Dict],
+        customer_unique_id: Optional[str] = None,
+    ) -> Dict:
+        """
+        Prédiction intelligente :
+        - Si customer_unique_id est fourni ET qu'il existe dans la base,
+          on FUSIONNE l'historique de la base avec les nouvelles commandes
+          avant de calculer les features.
+        - Sinon on prédit uniquement avec les nouvelles commandes fournies.
+
+        Retourne un dict incluant :
+          is_existing_customer, n_historical_orders, n_new_orders,
+          n_total_orders, + tous les champs habituels de predict_from_raw_orders.
+        """
+        historical: List[Dict] = []
+        is_existing = False
+
+        if customer_unique_id:
+            historical = self.get_customer_orders_from_db(customer_unique_id)
+            is_existing = len(historical) > 0
+
+        # Assure que toutes les nouvelles commandes ont le bon customer_unique_id
+        if customer_unique_id:
+            for o in new_orders:
+                o["customer_unique_id"] = customer_unique_id
+
+        if is_existing:
+            # Fusion : historique en premier, nouvelles commandes en dernier
+            combined = historical + new_orders
+            logger.info(
+                f"Smart predict for existing customer {customer_unique_id}: "
+                f"{len(historical)} historical + {len(new_orders)} new = {len(combined)} total orders"
+            )
+        else:
+            combined = new_orders
+            logger.info(
+                f"Smart predict for new customer {customer_unique_id or 'unknown'}: "
+                f"{len(new_orders)} new orders only"
+            )
+
+        result = self.predict_from_raw_orders(combined)
+        result["is_existing_customer"] = is_existing
+        result["n_historical_orders"] = len(historical)
+        result["n_new_orders"] = len(new_orders)
+        result["n_total_orders"] = len(combined)
+        return result
+
+    def predict_from_customer_id(self, customer_unique_id: str) -> Dict:
+        """
+        Prédit directement à partir de l'historique complet du client en base.
+        Lève une ValueError si le client n'existe pas.
+        """
+        historical = self.get_customer_orders_from_db(customer_unique_id)
+        if not historical:
+            raise ValueError(
+                f"Client '{customer_unique_id}' introuvable dans la base de données."
+            )
+        logger.info(
+            f"Direct prediction for customer {customer_unique_id} "
+            f"using {len(historical)} historical orders"
+        )
+        result = self.predict_from_raw_orders(historical)
+        result["is_existing_customer"] = True
+        result["n_historical_orders"] = len(historical)
+        result["n_new_orders"] = 0
+        result["n_total_orders"] = len(historical)
+        return result
 
     def predict_segment(self, features: Dict[str, float]) -> Dict:
         """
@@ -294,7 +451,7 @@ class SegmentationAPI:
             if col in df.columns:
                 df[col] = pd.to_datetime(df[col], format="mixed", errors="coerce")
         
-        # Filter delivered orders (fall back to all if none delivered)
+        # Filter delivered orders (same as training - model was trained on delivered orders only)
         delivered = df[df["order_status"] == "delivered"]
         if delivered.empty:
             delivered = df
@@ -970,6 +1127,71 @@ def predict_raw(request: RawPredictionRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@app.post("/predict-smart", response_model=SegmentationResponse)
+def predict_smart(request: SmartPredictionRequest):
+    """
+    Prédiction intelligente avec fusion automatique historique + nouvelles commandes.
+
+    Comportement :
+    - Si `customer_unique_id` est fourni et que le client existe dans la base :
+      l'historique complet du client est FUSIONNÉ avec les nouvelles commandes
+      avant de calculer les features et de prédire.
+    - Si le client n'existe pas (nouveau client) : on prédit avec les nouvelles
+      commandes fournies uniquement.
+    - Si `orders` est vide et `customer_unique_id` est fourni :
+      on prédit directement depuis l'historique en base (client existant requis).
+
+    La réponse inclut des métadonnées :
+    - `is_existing_customer` : True si le client était dans la base
+    - `n_historical_orders` : nombre de commandes historiques utilisées
+    - `n_new_orders` : nombre de nouvelles commandes fournies
+    - `n_total_orders` : total des commandes utilisées pour la prédiction
+    """
+    if not segmentation_api:
+        raise HTTPException(status_code=503, detail="API not initialized")
+
+    try:
+        new_orders = [o.model_dump() for o in request.orders]
+
+        # Cas : aucune commande fournie → prédiction directe depuis la base
+        if not new_orders:
+            if not request.customer_unique_id:
+                raise ValueError(
+                    "Fournissez au moins une commande ou un customer_unique_id existant en base."
+                )
+            result = segmentation_api.predict_from_customer_id(request.customer_unique_id)
+        else:
+            result = segmentation_api.predict_smart(
+                new_orders=new_orders,
+                customer_unique_id=request.customer_unique_id,
+            )
+
+        return SegmentationResponse(**result)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Smart prediction error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/customer/{customer_id}/predict", response_model=SegmentationResponse)
+def predict_customer_from_history(customer_id: str):
+    """
+    Prédit le segment d'un client existant directement depuis son historique en base.
+    Retourne 404 si le client n'existe pas dans base_final.csv.
+    """
+    if not segmentation_api:
+        raise HTTPException(status_code=503, detail="API not initialized")
+    try:
+        result = segmentation_api.predict_from_customer_id(customer_id)
+        return SegmentationResponse(**result)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Customer predict error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @app.post("/predict-bulk")
 def predict_bulk(request: BulkPredictionRequest):
     """
@@ -1035,6 +1257,38 @@ def get_statistics():
         return stats
     except Exception as e:
         logger.error(f"Error getting statistics: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/customer/{customer_id}/orders")
+def get_customer_orders(customer_id: str):
+    """
+    Retourne l'historique des commandes d'un client depuis base_final.csv.
+    Utilise le cache lazy-loaded de l'API (pas de reload à chaque appel).
+    """
+    if not segmentation_api:
+        raise HTTPException(status_code=503, detail="API not initialized")
+
+    try:
+        orders_list = segmentation_api.get_customer_orders_from_db(customer_id)
+
+        if not orders_list:
+            return {
+                "orders": [],
+                "message": "Nouveau client — aucun historique trouvé en base.",
+                "is_new_customer": True,
+                "customer_id": customer_id,
+            }
+
+        return {
+            "orders": orders_list,
+            "message": f"Historique chargé : {len(orders_list)} commande(s) trouvée(s)",
+            "is_new_customer": False,
+            "customer_id": customer_id,
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting customer orders: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 
