@@ -264,13 +264,11 @@ class SegmentationAPI:
 
     def get_customer_orders_from_db(self, customer_unique_id: str) -> List[Dict]:
         """
-        Retourne les commandes historiques d'un client depuis la customer DB.
+        Retourne les commandes historiques d'un client depuis customer_orders_db.csv.
 
-        La base est au niveau item (une ligne par article commandé).
-        On agrège par order_id pour obtenir une ligne par commande :
-          - payment_value  : somme (total payé pour la commande)
-          - payment_installments, order_status, order_purchase_timestamp,
-            order_delivered_customer_date, review_score : première valeur non-nulle
+        Le fichier est pré-agrégé au niveau commande (1 ligne par order_id),
+        ne contient que les commandes "delivered" et a été généré par
+        scripts/gen_customer_db.py. Pas de groupby nécessaire ici.
         """
         self._ensure_customer_db()
         if self._customer_db is None:
@@ -282,40 +280,8 @@ class SegmentationAPI:
         if rows.empty:
             return []
 
-        # ── Filtre sur le statut ──────────────────────────────────────────────
-        # On ne conserve que les commandes "delivered", comme dans le pipeline
-        # d'entraînement. Les commandes annulées, expédiées, en attente, etc.
-        # sont exclues pour que le compte et les features soient cohérents
-        # avec ceux utilisés lors de l'entraînement du modèle.
-        delivered = rows[rows["order_status"] == "delivered"]
-        n_excluded = len(rows["order_id"].unique()) - len(delivered["order_id"].unique())
-        if n_excluded > 0:
-            logger.debug(
-                f"Customer {customer_unique_id}: {n_excluded} commande(s) non-delivered exclues."
-            )
-        rows = delivered if not delivered.empty else rows  # fallback si aucune delivered
-
-
-        # ── Agrégation par order_id ───────────────────────────────────────────
-        # payment_value dans base_final.csv est le total de la commande,
-        # répété pour chaque article → on prend "first" (pas "sum") pour éviter
-        # le double comptage.
-        agg = (
-            rows.groupby("order_id", sort=False)
-            .agg(
-                customer_unique_id=("customer_unique_id", "first"),
-                order_status=("order_status", "first"),
-                order_purchase_timestamp=("order_purchase_timestamp", "first"),
-                order_delivered_customer_date=("order_delivered_customer_date", "first"),
-                payment_value=("payment_value", "first"),        # total commande répété
-                payment_installments=("payment_installments", "first"),
-                review_score=("review_score", "first"),
-            )
-            .reset_index()
-        )
-
         result = []
-        for _, r in agg.iterrows():
+        for _, r in rows.iterrows():
             order = {
                 "order_id": str(r["order_id"]),
                 "customer_unique_id": customer_unique_id,
@@ -338,10 +304,10 @@ class SegmentationAPI:
             result.append(order)
 
         logger.info(
-            f"Customer {customer_unique_id}: {len(rows)} lignes brutes → "
-            f"{len(result)} commande(s) après agrégation"
+            f"Customer {customer_unique_id}: {len(result)} commande(s) trouvée(s) en base"
         )
         return result
+
 
 
     def predict_smart(
