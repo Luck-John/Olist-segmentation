@@ -20,30 +20,31 @@ Projet_2026/
 ├── notebooks/                   # Notebooks Jupyter
 │   ├── segmentation_01_analyse.ipynb        # Analyse exploratoire
 │   ├── segmentation_02_analyse.ipynb        # Analyse approfondie
-│   ├── Segmentation_03_modelisation.ipynb   # Modélisation et clustering
+│   ├── Segmentation_03_modelisation.ipynb   # Modélisation et clustering final
 │   ├── simulation_frequence_maj.ipynb       # Simulation fréquence de MAJ
 │   ├── models/                  # Modèles sérialisés (.pkl)
+│   │   ├── final_pipeline.pkl   # Pipeline de production (KMeans k=5)
+│   │   ├── KMeans_k5.pkl        # Modèle KMeans seul
+│   │   └── cluster_names.json   # Noms des segments
 │   ├── figures/                 # Graphiques générés
-│   └── reports/                 # Rapports CSV
+│   └── reports/                 # Rapports CSV (profils, résultats)
 ├── scripts/                     # Scripts Python
-│   ├── api.py                   # API FastAPI de prediction
+│   ├── api.py                   # API FastAPI de prédiction
 │   ├── full_pipeline.py         # Pipeline complet d'entraînement
-│   ├── start_api.py             # Lanceur de l'API
-│   ├── run_pipeline.py          # Exécution du pipeline
-│   └── gen_customer_db.py       # Génération base clients optimisée
+│   ├── gen_customer_db.py       # Génération base clients optimisée
+│   └── start_api.py             # Lanceur de l'API
 ├── src/                         # Code source modulaire
 │   ├── data/                    # Chargement et preprocessing
 │   ├── features/                # Feature engineering (RFM, CLV)
 │   ├── clustering/              # Modèles de clustering
 │   └── utils/                   # Configuration et utilitaires
 ├── templates/                   # Templates HTML (interface web)
-│   └── segmentation_form.html   # Interface principale de prédiction
 ├── tests/                       # Tests unitaires (pytest)
 ├── config/                      # Configuration (config.yaml)
 ├── Dockerfile                   # Conteneurisation Docker
 ├── railway.toml                 # Déploiement Railway
 ├── requirements.txt             # Dépendances Python
-└── requirements-api.txt         # Dépendances API
+└── requirements-api.txt         # Dépendances API uniquement
 ```
 
 ## Methodologie
@@ -121,15 +122,26 @@ python start_api.py
 
 ```bash
 # Cloner le depot
-git clone <url-du-repo>
+git clone https://github.com/Luck-John/Olist-segmentation
 cd Projet_2026
 
 # Creer l'environnement virtuel
 python -m venv .venv
 .venv\Scripts\activate  # Windows
+source .venv/bin/activate  # Linux/Mac
 
 # Installer les dependances
 pip install -r requirements.txt
+```
+
+## Re-entraîner le pipeline
+
+```bash
+# Générer data/Base.csv (features engineered) puis entraîner KMeans
+python scripts/full_pipeline.py
+
+# Générer la base clients pour l'API smart
+python scripts/gen_customer_db.py
 ```
 
 ## Deploiement
@@ -142,6 +154,16 @@ docker build -t olist-segmentation .
 
 # Deploiement Railway
 railway up
+```
+
+## Tests
+
+```bash
+# Lancer tous les tests unitaires et d'integration
+python -m pytest tests/ -v
+
+# Tests rapides uniquement
+python -m pytest tests/ -v -m "not integration"
 ```
 
 ## Technologies
@@ -157,3 +179,10 @@ railway up
 ## Auteurs
 
 Projet ISE2 — Machine Learning 2 — Semestre 2, 2026
+
+| Auteur | GitHub |
+|--------|--------|
+| **Jean Luc BATABATI** | [@Luck-John](https://github.com/Luck-John) |
+| **Fromo Francis HABA** | [@fromofrancishaba](https://github.com/fromofrancishaba) |
+| **Aissatou Sega DIALLO** | [@ASegaDiallo](https://github.com/ASegaDiallo) |
+| **Jeanne de la Flèche AMANA ONANENA** | [@LaFleche06](https://github.com/LaFleche06) |
