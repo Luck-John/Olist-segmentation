@@ -198,6 +198,14 @@ best_silhouette = results_df.iloc[best_idx]["silhouette"]
 print(f"\n    OK Best K: {BEST_K} (silhouette={best_silhouette:.4f})")
 
 # ============================================================
+# SAVE PROCESSED BASE (BEFORE MODELING)
+# ============================================================
+print("\n[SAVE] Saving processed base before modeling...")
+base_pip_file = "data/Base_pip.csv"
+df.to_csv(base_pip_file, index=False)
+print(f"    OK Base pip saved: {base_pip_file}")
+
+# ============================================================
 # PREPARE FINAL OUTPUTS
 # ============================================================
 print("\n" + "=" * 70)
