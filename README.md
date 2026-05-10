@@ -2,15 +2,15 @@
 
 Projet de Machine Learning 2 — ISE2, (2025-2026)
 
-## 🚀 API en Production
+## API en Production
 
 **L'API est déployée et accessible en ligne :**
-👉 [https://olist-segmentation-api-production.up.railway.app/form](https://olist-segmentation-api-production.up.railway.app/form)
+ [https://olist-segmentation-api-production.up.railway.app/form](https://olist-segmentation-api-production.up.railway.app/form)
 
-## 🎨 Présentation du projet
+## Présentation du projet
 
 **Slides de présentation (Canva) :**
-👉 [Voir la présentation](https://www.canva.com/design/DAHJE7Cz2iU/-dCVE0D6EAdotUzouuVJEg/edit)
+[Voir la présentation](https://www.canva.com/design/DAHJE7Cz2iU/-dCVE0D6EAdotUzouuVJEg/edit)
 
 ## Objectif
 
