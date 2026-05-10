@@ -1,6 +1,6 @@
 # Segmentation Client Olist
 
-Projet de Machine Learning 2 — ISE2, Semestre 2 (2026)
+Projet de Machine Learning 2 — ISE2, (2025-2026)
 
 ## 🚀 API en Production
 

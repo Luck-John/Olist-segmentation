@@ -8,7 +8,7 @@ Tests cover:
 import pytest
 import numpy as np
 import pandas as pd
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 from sklearn.preprocessing import StandardScaler
 
 from src.clustering.models import KMeansClustering, DBSCANClustering, HierarchicalClustering
