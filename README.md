@@ -7,6 +7,11 @@ Projet de Machine Learning 2 — ISE2, (2025-2026)
 **L'API est déployée et accessible en ligne :**
 👉 [https://olist-segmentation-api-production.up.railway.app/form](https://olist-segmentation-api-production.up.railway.app/form)
 
+## 🎨 Présentation du projet
+
+**Slides de présentation (Canva) :**
+👉 [Voir la présentation](https://www.canva.com/design/DAHJE7Cz2iU/-dCVE0D6EAdotUzouuVJEg/edit)
+
 ## Objectif
 
 Ce projet réalise la **segmentation non supervisée** des clients de la plateforme e-commerce brésilienne Olist.
