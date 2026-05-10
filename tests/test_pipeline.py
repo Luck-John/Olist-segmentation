@@ -301,11 +301,13 @@ class TestDataContracts:
         df_converted = convert_dates(df, ["order_purchase_timestamp"])
         assert len(df_converted) == len(df)
 
-    def test_clv_raises_on_negative_monetary(self):
-        """calculate_clv must raise ValueError when Monetary is negative."""
+    def test_clv_clips_negative_monetary_to_zero(self):
+        """calculate_clv must clip negative Monetary to 0 (no ValueError raised)."""
         df_bad = pd.DataFrame({"Monetary": [-100, 200], "Frequency": [1, 2]})
-        with pytest.raises(ValueError, match="CLV must always be positive"):
-            calculate_clv(df_bad, dataset_duration_days=365)
+        clv = calculate_clv(df_bad, dataset_duration_days=365)
+        # Negative Monetary is clipped to 0; positive Monetary yields positive CLV
+        assert clv.iloc[0] == 0.0, "Negative Monetary must produce CLV = 0"
+        assert clv.iloc[1] > 0, "Positive Monetary must produce positive CLV"
 
     def test_validate_data_rejects_negative_payment(self):
         """validate_data must raise ValueError for negative payment_value."""
