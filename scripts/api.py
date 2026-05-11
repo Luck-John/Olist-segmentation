@@ -21,7 +21,7 @@ import pandas as pd
 import numpy as np
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -591,6 +591,118 @@ class SegmentationAPI:
         result["customer_id"] = customer_id
         result["engineered_features"] = features
         return result
+
+    def predict_batch_from_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Prediction en lot vectorisee depuis un DataFrame brut (niveau commande).
+
+        Optimisation : au lieu d'appeler predict_segment() une fois par client
+        (couteux : logs + appels sklearn separes), cette methode applique le
+        pipeline complet (QT -> Scaler -> PCA -> KMeans) en UNE SEULE operation
+        matricielle sur tous les clients (~100x plus rapide en lot).
+
+        Colonnes requises  : customer_unique_id, order_id, order_status,
+                             order_purchase_timestamp, payment_value
+        Colonnes optionnelles : payment_installments,
+                                order_delivered_customer_date, review_score
+        """
+        if "customer_unique_id" not in df.columns:
+            raise ValueError(
+                "Le fichier CSV doit contenir une colonne 'customer_unique_id'."
+            )
+
+        feature_cols    = self.pipeline["feature_cols"]
+        qt              = self.pipeline["quantile_transformer"]
+        scaler          = self.pipeline["scaler"]
+        pca             = self.pipeline["pca"]
+        model           = self.pipeline["model"]
+        cluster_names   = self.pipeline["cluster_names"]
+        segment_actions = self.pipeline["segment_actions"]
+        qt_min = qt.quantiles_[0, :]
+        qt_max = qt.quantiles_[-1, :]
+
+        # ---- Phase 1 : calcul des features (boucle legere, sans sklearn) ----
+        groups = df.groupby("customer_unique_id", sort=False)
+        total  = len(groups)
+        logger.info(f"Batch vectorise : {total} clients detectes.")
+
+        client_ids    = []
+        n_orders_list = []
+        feat_rows     = []
+        error_rows    = []
+
+        for cid, group in groups:
+            orders = group.to_dict(orient="records")
+            for o in orders:
+                o["customer_unique_id"] = cid
+            try:
+                features = self._compute_features_from_orders(orders)
+                client_ids.append(cid)
+                n_orders_list.append(len(orders))
+                feat_rows.append(features)
+            except Exception as e:
+                logger.warning(f"Echec features pour client {cid}: {e}")
+                error_rows.append({
+                    "customer_unique_id": cid,
+                    "n_orders": len(orders),
+                    "Recency": None, "avg_review_score_full": None,
+                    "avg_delivery_days": None, "avg_installments": None,
+                    "CLV_estimate": None,
+                    "cluster": -1, "segment_name": "Erreur",
+                    "segment_action": str(e), "confidence": None,
+                })
+
+        good_rows = []
+        if feat_rows:
+            # ---- Phase 2 : pipeline vectorise sur toute la matrice ----
+            X = np.array(
+                [[f[c] for c in feature_cols] for f in feat_rows],
+                dtype=np.float64
+            )
+            X = np.clip(X, qt_min, qt_max)
+
+            import warnings
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                X_qt     = qt.transform(X)
+                X_scaled = scaler.transform(X_qt)
+                X_pca    = pca.transform(X_scaled)
+
+            X_pred   = X_pca.astype(model.cluster_centers_.dtype, copy=False)
+            clusters = model.predict(X_pred)
+
+            centers = model.cluster_centers_
+            dists   = np.linalg.norm(
+                X_pred[:, np.newaxis, :] - centers[np.newaxis, :, :], axis=2
+            )
+            assigned_dists = dists[np.arange(len(clusters)), clusters]
+            confidences    = 1.0 / (1.0 + assigned_dists)
+
+            logger.info(f"Pipeline vectorise applique sur {len(feat_rows)} clients.")
+
+            for cid, n_ord, feats, clust, conf in zip(
+                client_ids, n_orders_list, feat_rows, clusters, confidences
+            ):
+                good_rows.append({
+                    "customer_unique_id": cid,
+                    "n_orders": n_ord,
+                    **feats,
+                    "cluster": int(clust),
+                    "segment_name": cluster_names.get(int(clust), f"Cluster {clust}"),
+                    "segment_action": segment_actions.get(int(clust), "Standard"),
+                    "confidence": round(float(conf), 4),
+                })
+
+        result_df = pd.DataFrame(good_rows + error_rows)
+        ordered_cols = [
+            "customer_unique_id", "n_orders",
+            "Recency", "avg_review_score_full", "avg_delivery_days",
+            "avg_installments", "CLV_estimate",
+            "cluster", "segment_name", "segment_action", "confidence",
+        ]
+        result_df = result_df[[c for c in ordered_cols if c in result_df.columns]]
+        logger.info(f"Batch terminee : {len(result_df)} clients.")
+        return result_df
 
     def get_cluster_profiles(self) -> List[ClusterProfile]:
         """Get profiles for all clusters"""
@@ -1281,6 +1393,69 @@ def predict_bulk(request: BulkPredictionRequest):
             results.append({"error": str(e)})
     
     return {"predictions": results}
+
+
+@app.post("/predict-csv")
+async def predict_csv(file: UploadFile = File(...)):
+    """
+    **Prédiction en lot depuis un fichier CSV.**
+
+    Accepte un CSV brut (niveau commande, plusieurs lignes par client autorisées).
+    Les clients sont agrégés par `customer_unique_id`, les 5 features du pipeline
+    sont calculées pour chaque client, et le cluster est prédit.
+
+    **Colonnes requises** : `customer_unique_id`, `order_id`, `order_status`,
+    `order_purchase_timestamp`, `payment_value`
+
+    **Optionnelles** : `payment_installments`, `order_delivered_customer_date`, `review_score`
+
+    **Retour** : CSV téléchargeable avec 1 ligne par client +
+    colonnes `cluster`, `segment_name`, `segment_action`, `confidence`.
+    """
+    if not segmentation_api:
+        raise HTTPException(status_code=503, detail="API not initialized")
+
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Le fichier doit être au format CSV (.csv).")
+
+    try:
+        content = await file.read()
+        try:
+            df = pd.read_csv(StringIO(content.decode("utf-8")), low_memory=False)
+        except UnicodeDecodeError:
+            df = pd.read_csv(StringIO(content.decode("latin-1")), low_memory=False)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Impossible de lire le CSV : {e}")
+
+    if df.empty:
+        raise HTTPException(status_code=400, detail="Le fichier CSV est vide.")
+
+    logger.info(f"CSV reçu : '{file.filename}' — {len(df)} lignes, colonnes={df.columns.tolist()}")
+
+    try:
+        result_df = segmentation_api.predict_batch_from_dataframe(df)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Batch prediction error: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la prédiction : {e}")
+
+    output = StringIO()
+    result_df.to_csv(output, index=False, encoding="utf-8")
+    output.seek(0)
+
+    base_name = file.filename.rsplit(".", 1)[0]
+    output_filename = f"{base_name}_segmented.csv"
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f'attachment; filename="{output_filename}"',
+            "X-Total-Customers": str(len(result_df)),
+            "X-Input-Rows": str(len(df)),
+        },
+    )
 
 
 @app.get("/profiles", response_model=List[ClusterProfile])

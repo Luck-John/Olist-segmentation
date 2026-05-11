@@ -525,6 +525,23 @@
         flex-direction: column
       }
     }
+
+    /* ---- Batch / Upload zone ---- */
+    .upload-zone {
+      border: 2px dashed #b8d4f0;
+      border-radius: 12px;
+      background: #f8fbff;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      margin-bottom: .8rem
+    }
+    .upload-zone:hover { border-color: #0066cc; background: #eef5ff }
+    .upload-icon { font-size: 2.4rem; margin-bottom: .5rem }
+    .upload-label { font-weight: 700; color: #003d7a; font-size: 1rem; margin-bottom: .3rem }
+    .upload-hint { font-size: .8rem; color: #5a7a9a }
+    code { background: #e8f0fb; padding: .1rem .35rem; border-radius: 4px; font-size: .82rem; color: #0052a3 }
   </style>
 </head>
 
@@ -541,7 +558,7 @@
     <div class="card">
       <div class="tabs">
         <button class="tab active" id="tab-smart" onclick="switchTab('smart')">Mode Commandes</button>
-        <button class="tab" id="tab-direct" onclick="switchTab('direct')">Mode Historique Direct</button>
+        <button class="tab" id="tab-batch" onclick="switchTab('batch')">Prédiction en Lot (CSV)</button>
       </div>
 
       <!-- ===== TAB 1: SMART ===== -->
@@ -584,25 +601,82 @@
         </div>
       </div>
 
-      <!-- ===== TAB 2: DIRECT ===== -->
-      <div id="panel-direct" class="tab-panel">
+      <!-- ===== TAB 2: BATCH CSV ===== -->
+      <div id="panel-batch" class="tab-panel">
 
         <div class="info-banner info">
-          Entrez l'identifiant d'un client existant en base. La prediction utilisera
-          directement tout son historique de commandes, sans avoir a saisir quoi que ce soit.
+          <strong>Prédiction en lot :</strong> chargez un fichier CSV contenant vos clients
+          (une ligne par commande, plusieurs commandes par client autorisées).
+          L'API agrège automatiquement les commandes par client, calcule les features
+          du pipeline et retourne un CSV téléchargeable avec le cluster de chaque client.
         </div>
 
-        <div class="form-group">
-          <label>ID Client (customer_unique_id)</label>
-          <input type="text" id="directCustId" autocomplete="off">
+        <!-- Colonnes requises -->
+        <div class="info-banner warning" style="margin-bottom:1rem">
+          <strong>Colonnes requises :</strong>
+          <code>customer_unique_id</code>, <code>order_id</code>, <code>order_status</code>,
+          <code>order_purchase_timestamp</code>, <code>payment_value</code><br>
+          <strong>Optionnelles :</strong>
+          <code>payment_installments</code>, <code>order_delivered_customer_date</code>, <code>review_score</code>
         </div>
 
-        <div class="lookup-status" id="directStatus" style="margin-bottom:.8rem"></div>
+        <!-- Zone de dépôt / sélection fichier -->
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('batchFile').click()">
+          <div class="upload-icon">📂</div>
+          <div class="upload-label" id="uploadLabel">Cliquez ou glissez votre fichier CSV ici</div>
+          <div class="upload-hint">Format : CSV, encodage UTF-8 ou Latin-1</div>
+          <input type="file" id="batchFile" accept=".csv" style="display:none" onchange="onFileSelect(event)">
+        </div>
 
-        <div class="btn-group">
-          <button class="btn btn-secondary"
-            onclick="document.getElementById('directCustId').value='';document.getElementById('directStatus').innerHTML=''">Effacer</button>
-          <button class="btn btn-success" onclick="submitDirect()">Predire depuis l'historique</button>
+        <!-- Aperçu stats fichier -->
+        <div id="batchFileInfo" style="display:none" class="info-banner info" style="margin-top:.8rem">
+          <span id="batchFileName"></span> — <span id="batchFileSize"></span>
+        </div>
+
+        <!-- Progression -->
+        <div id="batchProgress" style="display:none;margin-top:1rem">
+          <div style="font-size:.88rem;color:#0052a3;margin-bottom:.4rem" id="batchProgressMsg">Traitement en cours...</div>
+          <div class="conf-bar" style="height:10px">
+            <div class="conf-fill" id="batchProgressBar" style="width:0%;transition:width .3s"></div>
+          </div>
+        </div>
+
+        <!-- Résultat batch -->
+        <div id="batchResult" style="display:none" class="result-card show" style="margin-top:1rem">
+          <div class="card-title" style="color:#155724">✅ Prédiction terminée</div>
+          <div class="result-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1rem">
+            <div class="result-item">
+              <div class="result-label">Clients traités</div>
+              <div class="result-value" id="batchNClients">-</div>
+            </div>
+            <div class="result-item">
+              <div class="result-label">Lignes en entrée</div>
+              <div class="result-value" id="batchNRows">-</div>
+            </div>
+            <div class="result-item">
+              <div class="result-label">Fichier de sortie</div>
+              <div class="result-value" style="font-size:.82rem" id="batchOutName">-</div>
+            </div>
+          </div>
+
+          <!-- Distribution par cluster -->
+          <div id="clusterDistribution" style="margin-bottom:1.5rem; padding:1rem; background:#f0f7ff; border-radius:8px; border-left:4px solid #0066cc">
+            <div style="font-weight:600;color:#0052a3;margin-bottom:.8rem">📊 Distribution par cluster:</div>
+            <div id="clusterStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem"></div>
+          </div>
+
+          <button class="btn btn-success" id="batchDownloadBtn" onclick="downloadBatchResult()" style="width:100%;padding:1rem;font-size:1rem;font-weight:600">⬇️ TÉLÉCHARGER LE CSV SEGMENTÉ</button>
+        </div>
+
+        <!-- Erreur batch -->
+        <div id="batchError" style="display:none" class="result-card show error-state">
+          <div class="error-card-title">Erreur</div>
+          <div class="error-card-msg" id="batchErrorMsg"></div>
+        </div>
+
+        <div class="btn-group" style="margin-top:1.2rem">
+          <button class="btn btn-secondary" onclick="resetBatch()">Réinitialiser</button>
+          <button class="btn btn-primary" id="batchSubmitBtn" onclick="submitBatch()" disabled>Lancer la prédiction en lot</button>
         </div>
       </div>
     </div>
@@ -685,7 +759,7 @@
 
     // ---- Tabs ----
     function switchTab(t) {
-      ['smart', 'direct'].forEach(id => {
+      ['smart', 'batch'].forEach(id => {
         document.getElementById('panel-' + id).classList.toggle('active', id === t);
         document.getElementById('tab-' + id).classList.toggle('active', id === t);
       });
@@ -818,32 +892,199 @@
       await callPredict('/predict-smart', { customer_unique_id: custId || null, orders });
     }
 
-    // ---- Submit direct ----
-    async function submitDirect() {
-      const id = document.getElementById('directCustId').value.trim();
-      if (!id) {
-        showError('Veuillez entrer un ID client.', 'L\'identifiant client (customer_unique_id) est un code hexadecimal de 32 caracteres. Utilisez le bouton "Exemple ID client" pour voir un exemple.');
+    // ---- Batch CSV logic ----
+    let batchBlob = null;
+    let batchOutputName = 'clients_segmented.csv';
+
+    function onFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      showBatchFile(file);
+    }
+
+    function showBatchFile(file) {
+      document.getElementById('uploadLabel').textContent = '📄 ' + file.name;
+      document.getElementById('batchFileInfo').style.display = 'block';
+      document.getElementById('batchFileName').textContent = file.name;
+      document.getElementById('batchFileSize').textContent = (file.size / 1024).toFixed(1) + ' Ko';
+      document.getElementById('batchSubmitBtn').disabled = false;
+      document.getElementById('uploadZone').style.borderColor = '#0066cc';
+      document.getElementById('uploadZone').style.background = '#eef5ff';
+      // Reset previous results
+      document.getElementById('batchResult').style.display = 'none';
+      document.getElementById('batchError').style.display = 'none';
+      batchBlob = null;
+    }
+
+    // Drag & drop support
+    document.addEventListener('DOMContentLoaded', () => {
+      const zone = document.getElementById('uploadZone');
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = '#0066cc'; zone.style.background = '#eef5ff'; });
+      zone.addEventListener('dragleave', () => { zone.style.borderColor = '#b8d4f0'; zone.style.background = '#f8fbff'; });
+      zone.addEventListener('drop', e => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file && file.name.toLowerCase().endsWith('.csv')) {
+          document.getElementById('batchFile').files; // can't set files directly
+          showBatchFile(file);
+          // store file reference for submit
+          zone._droppedFile = file;
+        } else {
+          alert('Veuillez déposer un fichier .csv');
+        }
+      });
+    });
+
+    async function submitBatch() {
+      const fileInput = document.getElementById('batchFile');
+      const zone = document.getElementById('uploadZone');
+      const file = zone._droppedFile || fileInput.files[0];
+      if (!file) { alert('Sélectionnez un fichier CSV.'); return; }
+
+      document.getElementById('batchResult').style.display = 'none';
+      document.getElementById('batchError').style.display = 'none';
+      document.getElementById('batchProgress').style.display = 'block';
+      document.getElementById('batchProgressMsg').textContent = 'Envoi et traitement en cours...';
+      document.getElementById('batchProgressBar').style.width = '30%';
+      document.getElementById('batchSubmitBtn').disabled = true;
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file, file.name);
+
+        document.getElementById('batchProgressBar').style.width = '60%';
+        const resp = await fetch('/predict-csv', { method: 'POST', body: formData });
+
+        document.getElementById('batchProgressBar').style.width = '90%';
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+          throw new Error(err.detail || 'Erreur API ' + resp.status);
+        }
+
+        batchBlob = await resp.blob();
+        const nClients = resp.headers.get('X-Total-Customers') || '?';
+        const nRows = resp.headers.get('X-Input-Rows') || '?';
+        const cd = resp.headers.get('Content-Disposition') || '';
+        const match = cd.match(/filename="?([^"]+)"?/);
+        batchOutputName = match ? match[1] : file.name.replace('.csv', '_segmented.csv');
+
+        document.getElementById('batchProgressBar').style.width = '100%';
+        document.getElementById('batchProgressMsg').textContent = 'Terminé !';
+
+        document.getElementById('batchNClients').textContent = nClients;
+        document.getElementById('batchNRows').textContent = nRows;
+        document.getElementById('batchOutName').textContent = batchOutputName;
+        
+        // Parse CSV to get cluster distribution
+        const csvText = await batchBlob.text();
+        const clusterDist = parseClusterDistribution(csvText);
+        displayClusterStats(clusterDist);
+        
+        document.getElementById('batchResult').style.display = 'block';
+        document.getElementById('batchResult').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      } catch (e) {
+        document.getElementById('batchErrorMsg').textContent = e.message;
+        document.getElementById('batchError').style.display = 'block';
+      } finally {
+        document.getElementById('batchProgress').style.display = 'none';
+        document.getElementById('batchProgressBar').style.width = '0%';
+        document.getElementById('batchSubmitBtn').disabled = false;
+      }
+    }
+
+    function parseClusterDistribution(csvText) {
+      const lines = csvText.trim().split('\n');
+      const header = lines[0].split(',');
+      const clusterIdx = header.indexOf('cluster');
+      const segmentIdx = header.indexOf('segment_name');
+      
+      const distribution = {};
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',');
+        const cluster = values[clusterIdx];
+        const segment = values[segmentIdx];
+        
+        if (!distribution[cluster]) {
+          distribution[cluster] = { count: 0, segment: segment };
+        }
+        distribution[cluster].count++;
+      }
+      
+      return distribution;
+    }
+
+    function displayClusterStats(distribution) {
+      const statsDiv = document.getElementById('clusterStats');
+      statsDiv.innerHTML = '';
+      
+      const clusters = Object.keys(distribution).sort((a, b) => parseInt(a) - parseInt(b));
+      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+      
+      clusters.forEach((cluster, idx) => {
+        const data = distribution[cluster];
+        const color = colors[idx % colors.length];
+        
+        const item = document.createElement('div');
+        item.style.cssText = `
+          padding: 0.8rem;
+          background: white;
+          border-radius: 6px;
+          border-left: 4px solid ${color};
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        `;
+        
+        item.innerHTML = `
+          <div style="font-weight:600;color:${color};font-size:1rem">${data.count} client${data.count > 1 ? 's' : ''}</div>
+          <div style="font-size:0.85rem;color:#666;margin-top:0.3rem">Cluster ${cluster}</div>
+          <div style="font-size:0.78rem;color:#999;margin-top:0.2rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${data.segment}</div>
+        `;
+        
+        statsDiv.appendChild(item);
+      });
+    }
+
+    function downloadBatchResult() {
+      if (!batchBlob) {
+        alert('Aucun fichier à télécharger. Veuillez d\'abord effectuer une prédiction.');
         return;
       }
-      clearError(); showLoading(true);
-      try {
-        const r = await fetch('/customer/' + encodeURIComponent(id) + '/predict');
-        const d = await r.json();
-        if (!r.ok) {
-          const tip = r.status === 404
-            ? 'Cet identifiant n\'existe pas dans la base de donnees. Verifiez l\'ID ou utilisez le Mode Commandes pour un nouveau client.'
-            : 'Verifiez que l\'API est bien disponible et reessayez.';
-          throw new Error(d.detail || 'Erreur API');
-        }
-        displayResult(d);
-        document.getElementById('directStatus').innerHTML =
-          '<span class="badge badge-existing">' + d.n_historical_orders + ' commande(s) historiques utilisees</span>';
-      } catch (e) {
-        const tip = e.message.includes('introuvable') || e.message.includes('not found')
-          ? 'Cet identifiant n\'existe pas dans la base de donnees. Verifiez l\'ID ou utilisez le Mode Commandes pour predire sans historique.'
-          : null;
-        showError(e.message, tip);
-      } finally { showLoading(false); }
+      const url = URL.createObjectURL(batchBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = batchOutputName;
+      document.body.appendChild(a);
+      
+      // Flash visual feedback
+      const btn = document.getElementById('batchDownloadBtn');
+      const originalText = btn.textContent;
+      btn.textContent = '✅ Téléchargement en cours...';
+      btn.style.background = '#10b981';
+      
+      a.click();
+      
+      // Reset after a moment
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        a.remove();
+        btn.textContent = originalText;
+        btn.style.background = '';
+      }, 1500);
+    }
+
+    function resetBatch() {
+      document.getElementById('batchFile').value = '';
+      document.getElementById('uploadZone')._droppedFile = null;
+      document.getElementById('uploadLabel').textContent = 'Cliquez ou glissez votre fichier CSV ici';
+      document.getElementById('uploadZone').style.borderColor = '#b8d4f0';
+      document.getElementById('uploadZone').style.background = '#f8fbff';
+      document.getElementById('batchFileInfo').style.display = 'none';
+      document.getElementById('batchResult').style.display = 'none';
+      document.getElementById('batchError').style.display = 'none';
+      document.getElementById('batchSubmitBtn').disabled = true;
+      batchBlob = null;
     }
 
     async function callPredict(url, body) {
