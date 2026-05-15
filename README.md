@@ -55,7 +55,7 @@ Projet_2026/
 ## Methodologie
 
 ### 1. Analyse exploratoire
-- Chargement et nettoyage des 11 tables Olist
+- Chargement et nettoyage des 9 tables Olist
 - Jointures et creation du dataset client unifie (93 358 clients)
 
 ### 2. Feature Engineering
